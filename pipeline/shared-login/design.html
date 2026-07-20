@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Instant Re-Play · Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     INSTANT RE-PLAY — Sign in (the front door)
+     Lens: Neutra BIOREALISM — the SAME window onto the golden-hour
+     garden as the log, but staged as a calm, centred FRONT DOOR: one
+     long, low CANTILEVERED PLASTER PLANE floating over the garden
+     ground, with the wordmark as signage above it. Garden aloe is
+     spent on exactly ONE action here — "Send me a link". Every token,
+     face, shadow and motion is inherited from design-system.md; no new
+     colour, no new font, no nested planes.
+     ============================================================ */
+
+  :root{
+    /* --- floating plaster planes (warm, sunlit) --- */
+    --plaster:      #F8F1E3;
+    --plaster-hi:   #FDF8EE;
+    --plaster-top:  #FFFCF5;
+    --recess:       #F1E7D4;
+    --recess-soft:  #EFE6D2;
+
+    /* --- atmospheric garden ground (never a flat slab) --- */
+    --ground-1:     #F3EAD8;
+    --ground-2:     #EFE6D2;
+    --ground-3:     #E9DAC0;
+    --ground-4:     #E3D2B4;
+
+    /* --- warm inks (no pure black; olive/walnut bias) --- */
+    --ink:          #2B261E;
+    --ink-2:        #4A4234;
+    --ink-3:        #6B5D46;
+    --ink-faint:    #8A7A5E;
+    --label-ink:    #574123;
+
+    /* --- wood: walnut & teak --- */
+    --walnut:       #7A5233;
+    --walnut-deep:  #4B2F19;
+    --teak:         #9A6738;
+    --teak-soft:    #C0A176;
+
+    /* --- the single landscape accent: garden aloe (primary action only) --- */
+    --aloe:         #3B6B4C;
+    --aloe-hi:      #47795A;
+    --aloe-deep:    #2F5A3F;
+    --aloe-line:    rgba(59,107,76,0.34);
+    --aloe-tint:    rgba(59,107,76,0.10);
+    --aloe-wash:    #E3EADF;
+    --on-aloe:      #FDF8EE;
+
+    /* --- desert clay: DESTRUCTIVE / semantic only --- */
+    --terra:        #A5502F;
+    --terra-deep:   #8C3F22;
+    --terra-tint:   rgba(165,80,47,0.10);
+    --on-terra:     #FDF7EC;
+
+    /* --- pool-and-sky (horizon / indoor-outdoor) --- */
+    --sky:          #C7DAD8;
+    --sky-soft:     #DCE7E1;
+
+    /* --- warm structural lines (steel mullions, hairlines) --- */
+    --sand:         #E0D5C0;
+    --sand-soft:    #EADFCA;
+    --hair:         #D8C5A2;
+    --steel:        #38332B;
+
+    /* --- warm walnut CANTILEVER shadows (roof-overhang softness) --- */
+    --sh-plane:  0 20px 40px -24px rgba(74,46,22,0.30), 0 3px 9px -5px rgba(74,46,22,0.15);
+    --sh-lift:   0 30px 58px -26px rgba(74,46,22,0.40), 0 6px 16px -7px rgba(74,46,22,0.18);
+    --sh-float:  0 44px 90px -34px rgba(56,34,14,0.46), 0 10px 26px -12px rgba(56,34,14,0.26);
+    --hi-edge:   inset 0 1px 0 rgba(255,251,243,0.75);
+
+    /* --- type scale (~1.25 steps) --- */
+    --fs-micro:  0.6875rem;
+    --fs-label:  0.75rem;
+    --fs-small:  0.8125rem;
+    --fs-body:   0.9375rem;
+    --fs-lead:   1.0625rem;
+    --fs-name:   1.375rem;
+    --fs-h:      1.5rem;
+    --fs-mark:   clamp(1.45rem, 1.05rem + 1.9vw, 2.1rem);
+    --fs-stat:   clamp(2.1rem, 1.5rem + 2.6vw, 3rem);
+    --fs-door:   clamp(1.6rem, 1.15rem + 1.5vw, 2rem);
+
+    --shell: 1180px;
+    --r: 10px;
+    --r-sm: 4px;
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --focus: 0 0 0 3px rgba(59,107,76,0.34);
+  }
+
+  /* ---- tokenized dark theme, kept on file; daylight remains the hero ---- */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --plaster:#242019; --plaster-hi:#2C2820; --plaster-top:#322E25; --recess:#201C16; --recess-soft:#1E1A14;
+      --ground-1:#1C1913; --ground-2:#191610; --ground-3:#15120D; --ground-4:#100E0A;
+      --ink:#F1E9D7; --ink-2:#CFC5AE; --ink-3:#A99C82; --ink-faint:#87795F; --label-ink:#D8C29A;
+      --walnut:#C79E76; --walnut-deep:#E0C39B; --teak:#C79E76; --teak-soft:#7C6141;
+      --aloe:#83B48E; --aloe-hi:#98C6A1; --aloe-deep:#98C6A1; --aloe-line:rgba(131,180,142,0.42); --aloe-tint:rgba(131,180,142,0.14);
+      --aloe-wash:#2A3A31; --on-aloe:#151913;
+      --terra:#D67A54; --terra-deep:#E58F68; --terra-tint:rgba(214,122,84,0.16); --on-terra:#181410;
+      --sky:#34483F; --sky-soft:#28352F;
+      --sand:#3A342A; --sand-soft:#322D24; --hair:#463D2E; --steel:#0F0D0A;
+      --sh-plane:0 20px 42px -24px rgba(0,0,0,0.6), 0 3px 9px -5px rgba(0,0,0,0.4);
+      --sh-lift:0 30px 60px -26px rgba(0,0,0,0.7), 0 6px 16px -7px rgba(0,0,0,0.45);
+      --sh-float:0 44px 92px -34px rgba(0,0,0,0.72), 0 10px 26px -12px rgba(0,0,0,0.5);
+      --hi-edge:inset 0 1px 0 rgba(255,251,243,0.06);
+      --on-aloe:#151913; --focus:0 0 0 3px rgba(131,180,142,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --plaster:#242019; --plaster-hi:#2C2820; --plaster-top:#322E25; --recess:#201C16; --recess-soft:#1E1A14;
+    --ground-1:#1C1913; --ground-2:#191610; --ground-3:#15120D; --ground-4:#100E0A;
+    --ink:#F1E9D7; --ink-2:#CFC5AE; --ink-3:#A99C82; --ink-faint:#87795F; --label-ink:#D8C29A;
+    --walnut:#C79E76; --walnut-deep:#E0C39B; --teak:#C79E76; --teak-soft:#7C6141;
+    --aloe:#83B48E; --aloe-hi:#98C6A1; --aloe-deep:#98C6A1; --aloe-line:rgba(131,180,142,0.42); --aloe-tint:rgba(131,180,142,0.14);
+    --aloe-wash:#2A3A31; --on-aloe:#151913;
+    --terra:#D67A54; --terra-deep:#E58F68; --terra-tint:rgba(214,122,84,0.16); --on-terra:#181410;
+    --sky:#34483F; --sky-soft:#28352F;
+    --sand:#3A342A; --sand-soft:#322D24; --hair:#463D2E; --steel:#0F0D0A;
+    --sh-plane:0 20px 42px -24px rgba(0,0,0,0.6), 0 3px 9px -5px rgba(0,0,0,0.4);
+    --sh-lift:0 30px 60px -26px rgba(0,0,0,0.7), 0 6px 16px -7px rgba(0,0,0,0.45);
+    --sh-float:0 44px 92px -34px rgba(0,0,0,0.72), 0 10px 26px -12px rgba(0,0,0,0.5);
+    --hi-edge:inset 0 1px 0 rgba(255,251,243,0.06);
+    --focus:0 0 0 3px rgba(131,180,142,0.4);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--ink-2);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:var(--fs-body);
+    line-height:1.6;
+    letter-spacing:0.005em;
+    text-rendering:optimizeLegibility;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    /* golden-hour garden: a warm sun glow + a cool pool-sky reflection up
+       top, an aloe hint low-left, over a layered warm plaster ground. */
+    background:
+      radial-gradient(88% 52% at 70% -10%, rgba(255,231,186,0.55) 0%, rgba(255,231,186,0) 46%),
+      radial-gradient(120% 78% at 84% -8%, rgba(199,218,216,0.55) 0%, rgba(199,218,216,0) 52%),
+      radial-gradient(96% 62% at 4% 108%, rgba(59,107,76,0.09) 0%, rgba(59,107,76,0) 56%),
+      linear-gradient(178deg, var(--ground-1) 0%, var(--ground-2) 44%, var(--ground-3) 74%, var(--ground-4) 100%);
+    background-attachment:fixed;
+  }
+
+  /* whisper-quiet plaster grain */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    opacity:0.05; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) body::before{ mix-blend-mode:screen; opacity:0.04; } }
+  :root[data-theme="dark"] body::before{ mix-blend-mode:screen; opacity:0.04; }
+
+  /* the distant horizon line — indoor/outdoor flow across the whole view */
+  body::after{
+    content:""; position:fixed; left:0; right:0; top:38vh; height:1px; z-index:0; pointer-events:none;
+    background:linear-gradient(90deg, transparent, rgba(122,79,44,0.16) 18%, rgba(122,79,44,0.16) 82%, transparent);
+  }
+
+  ::selection{ background:var(--aloe-wash); color:var(--ink); }
+
+  a{ color:inherit; }
+  button{ font-family:inherit; color:inherit; }
+  :focus-visible{ outline:none; box-shadow:var(--focus); border-radius:var(--r-sm); }
+
+  .shell{ position:relative; z-index:1; max-width:var(--shell); margin:0 auto; padding:0 clamp(1rem,4vw,3rem); }
+
+  .visually-hidden{
+    position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  }
+
+  /* ==================== SHARED BUTTONS (inherited) ==================== */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; cursor:pointer;
+    font-family:'Jost', sans-serif; font-weight:500; letter-spacing:0.05em;
+    border:1px solid transparent; border-radius:var(--r-sm);
+    transition:background 200ms var(--ease), box-shadow 200ms var(--ease), transform 160ms var(--ease), border-color 180ms var(--ease), color 180ms var(--ease), filter 160ms var(--ease);
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{
+    color:var(--on-aloe); background:linear-gradient(180deg, var(--aloe-hi), var(--aloe));
+    border-color:var(--aloe-deep); box-shadow:0 12px 26px -14px rgba(47,90,63,0.7), var(--hi-edge);
+  }
+  .btn-primary:hover{ background:linear-gradient(180deg, var(--aloe), var(--aloe-deep)); box-shadow:0 18px 32px -14px rgba(47,90,63,0.78); transform:translateY(-1px); }
+  .btn-primary:active{ transform:translateY(0); }
+  .btn-ghost{ color:var(--ink-2); background:var(--recess); border-color:var(--sand); }
+  .btn-ghost:hover{ background:var(--plaster-hi); border-color:var(--hair); }
+  .btn-lg{ font-size:var(--fs-body); padding:0.78rem 1.2rem; }
+  .btn-md{ font-size:var(--fs-small); padding:0.62rem 1.05rem; }
+  .btn-sm{ font-size:var(--fs-label); padding:0.46rem 0.85rem; letter-spacing:0.08em; text-transform:uppercase; }
+  .btn-block{ width:100%; }
+  .btn svg{ flex:0 0 auto; }
+
+  /* ==================== THE FRONT DOOR — centred over the garden ==================== */
+  main.login{ position:relative; z-index:1; }
+
+  .doorwrap{
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:clamp(1.3rem, 3vw, 2rem);
+    padding:clamp(2.4rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem) 6.5rem;
+  }
+
+  /* wordmark signage sits ABOVE the plane, over the open garden air */
+  .signage{ width:min(460px, 100%); text-align:center; opacity:0; animation:rise 300ms var(--ease) 40ms forwards; }
+  .eyebrow{
+    display:flex; align-items:center; justify-content:center; gap:0.6rem; margin:0 0 0.7rem;
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label);
+    letter-spacing:0.34em; text-transform:uppercase; color:var(--label-ink);
+  }
+  h1.wordmark{
+    margin:0; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-mark);
+    line-height:0.96; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink); text-wrap:balance;
+  }
+  h1.wordmark .thin{ font-weight:300; color:var(--ink-2); }
+  h1.wordmark .dot{ color:var(--aloe); font-weight:400; }
+  .signage .tagline{
+    margin:0.85rem auto 0; max-width:34ch; font-size:var(--fs-lead); line-height:1.45;
+    color:var(--ink-2); font-style:italic;
+  }
+
+  /* the single floating plaster PLANE — the front door, at rest depth */
+  .door{
+    position:relative; width:min(460px, 100%);
+    padding:clamp(1.6rem, 4.4vw, 2.5rem);
+    text-align:center;
+    background:
+      radial-gradient(120% 42% at 82% 0%, rgba(255,231,186,0.4), rgba(255,231,186,0) 62%),
+      linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border:1px solid var(--sand); border-radius:var(--r);
+    box-shadow:var(--sh-plane), var(--hi-edge);
+    opacity:0; animation:rise 300ms var(--ease) 130ms forwards;
+  }
+
+  /* a state panel: only one is visible at a time */
+  .panel{ display:block; }
+  .panel[hidden]{ display:none; }
+  .panel.is-anim{ animation:settle 240ms var(--ease) both; }
+
+  .panel h2{
+    margin:0 0 0.55rem; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-h);
+    letter-spacing:-0.006em; color:var(--ink); text-wrap:balance; line-height:1.15;
+  }
+  .panel--signin h2{ font-size:var(--fs-door); }
+  .panel .lead{
+    margin:0 auto; max-width:38ch; color:var(--ink-3); font-size:var(--fs-body); line-height:1.6;
+  }
+  .panel .lead strong{ font-weight:600; color:var(--ink-2); }
+  .panel .micro{
+    margin:1rem auto 0; max-width:38ch; font-size:var(--fs-small); color:var(--ink-3); line-height:1.5;
+  }
+
+  /* decorative glyph medallion (never a plane): aloe-tint for the welcoming
+     "on your way in" state; warm-neutral for the denial / expiry states so
+     the landscape accent stays reserved for the one action. */
+  .glyph{
+    display:grid; place-items:center; width:60px; height:60px; margin:0 auto 0.9rem; border-radius:50%;
+  }
+  .glyph svg{ width:27px; height:27px; }
+  .glyph.pos{ color:var(--aloe); border:1px solid var(--aloe-line); background:var(--aloe-tint); }
+  .glyph.neutral{ color:var(--walnut); border:1px solid var(--hair); background:var(--recess); }
+
+  /* ---- the sign-in form ---- */
+  .form{ margin-top:1.4rem; text-align:left; }
+  .field{ text-align:left; }
+  .field > label{
+    display:block; margin-bottom:0.45rem;
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label);
+    letter-spacing:0.16em; text-transform:uppercase; color:var(--label-ink);
+  }
+  .input{
+    width:100%; font:inherit; font-size:var(--fs-body); color:var(--ink);
+    padding:0.8rem 0.9rem; background:var(--recess); border:1px solid var(--sand); border-radius:var(--r-sm);
+    box-shadow:inset 0 1px 3px rgba(74,46,22,0.06);
+    transition:border-color 160ms var(--ease), box-shadow 160ms var(--ease), background 160ms var(--ease);
+  }
+  .input::placeholder{ color:var(--ink-3); }
+  .input:focus{ outline:none; border-color:var(--aloe-line); background:var(--plaster-hi); box-shadow:inset 0 1px 3px rgba(74,46,22,0.04), var(--focus); }
+  .field.invalid .input{ border-color:var(--terra); box-shadow:0 0 0 3px var(--terra-tint); }
+  .err{
+    display:none; margin-top:0.45rem; align-items:center; gap:0.35rem;
+    font-size:var(--fs-small); color:var(--terra-deep);
+  }
+  .field.invalid .err{ display:flex; }
+  .form .btn-primary{ margin-top:1.15rem; text-transform:uppercase; letter-spacing:0.09em; }
+
+  /* quiet secondary way back / try again — never wears the aloe accent */
+  .back-actions{ margin-top:1.35rem; display:flex; justify-content:center; }
+  .back-actions .btn-ghost{ text-transform:none; letter-spacing:0.02em; }
+
+  /* the invite-only reassurance line, tucked under the door */
+  .doorfoot{
+    width:min(460px, 100%); margin:0; text-align:center;
+    font-size:var(--fs-small); color:var(--ink-3); line-height:1.55; max-width:44ch;
+    opacity:0; animation:rise 300ms var(--ease) 210ms forwards;
+  }
+  .doorfoot .lock{ display:inline-flex; vertical-align:-0.14em; margin-right:0.3rem; color:var(--teak); }
+
+  /* ==================== SIGNED-IN HEADER (sign-out affordance) ==================== */
+  .headerview{ padding-bottom:3rem; }
+  header.sky{
+    position:relative;
+    padding-top:clamp(2.2rem, 5vw, 4.4rem);
+    padding-bottom:clamp(2.2rem, 5vw, 3.6rem);
+    background:linear-gradient(180deg, rgba(199,218,216,0.7) 0%, rgba(220,231,225,0.28) 38%, rgba(244,238,226,0) 100%);
+    overflow:hidden;
+  }
+  header.sky::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--hair) 10%, var(--hair) 90%, transparent);
+  }
+  .brandrow{ display:flex; align-items:flex-start; justify-content:space-between; gap:1.4rem 2.4rem; flex-wrap:wrap; }
+  .brandrow .brand{ min-width:0; text-align:left; }
+  .brandrow .eyebrow{ justify-content:flex-start; }
+  .brandrow h1.wordmark{ text-align:left; }
+  .brandrow .tagline{ margin:0.9rem 0 0; max-width:38ch; font-size:var(--fs-lead); line-height:1.45; color:var(--ink-2); font-style:italic; text-align:left; }
+
+  .headcluster{ display:flex; flex-direction:column; align-items:flex-end; gap:0.85rem; text-align:right; }
+  .signedas{
+    display:inline-flex; align-items:center; gap:0.4rem;
+    font-family:'Jost', sans-serif; font-size:var(--fs-micro); letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--label-ink);
+  }
+  .signedas .who{ text-transform:none; letter-spacing:0.01em; font-family:'IBM Plex Sans', sans-serif; font-size:var(--fs-small); color:var(--ink-3); }
+  .signout{ margin:0; }
+  .stat{
+    display:flex; align-items:baseline; gap:0.85rem; padding-top:0.35rem; margin-top:0.1rem;
+    border-top:1px solid var(--hair); white-space:nowrap;
+  }
+  .stat-num{
+    font-family:'Jost', sans-serif; font-weight:300; font-size:var(--fs-stat); line-height:0.82;
+    color:var(--walnut-deep); font-variant-numeric:tabular-nums;
+  }
+  .stat-cap{
+    font-family:'Jost', sans-serif; font-size:var(--fs-micro); letter-spacing:0.2em;
+    text-transform:uppercase; color:var(--label-ink); line-height:1.55; text-align:left;
+  }
+  .viewcap{
+    margin:1.8rem auto 0; max-width:58ch; text-align:center;
+    font-size:var(--fs-small); color:var(--ink-3); line-height:1.55;
+  }
+
+  /* ==================== DEMO SCAFFOLDING — not shipping ==================== */
+  .demobar{
+    position:fixed; left:50%; bottom:0.9rem; transform:translateX(-50%); z-index:80;
+    display:flex; align-items:center; gap:0.5rem 0.65rem; flex-wrap:wrap; justify-content:center;
+    max-width:calc(100vw - 1.2rem);
+    padding:0.5rem 0.7rem;
+    background:linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border:1px solid var(--sand); border-radius:999px;
+    box-shadow:var(--sh-float), var(--hi-edge);
+  }
+  .demolabel{
+    display:inline-flex; align-items:center; gap:0.4rem; padding-left:0.4rem;
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-micro);
+    letter-spacing:0.16em; text-transform:uppercase; color:var(--label-ink); white-space:nowrap;
+  }
+  .demolabel .dl-ico{ display:inline-flex; color:var(--teak); }
+  .demoseg{ display:flex; gap:0.28rem; flex-wrap:wrap; justify-content:center; }
+  .demoseg button{
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label); letter-spacing:0.05em;
+    color:var(--ink-2); background:var(--recess); border:1px solid var(--sand); border-radius:999px;
+    padding:0.4rem 0.8rem; cursor:pointer;
+    transition:background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
+  }
+  .demoseg button:hover{ background:var(--plaster-hi); border-color:var(--hair); color:var(--ink); }
+  .demoseg button[aria-pressed="true"]{ color:var(--walnut-deep); background:var(--aloe-tint); border-color:var(--aloe-line); }
+
+  /* ==================== KEYFRAMES (inherited) ==================== */
+  @keyframes rise{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+  @keyframes settle{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
+
+  /* ==================== RESPONSIVE — to 360px, no horizontal scroll ==================== */
+  @media (max-width:560px){
+    .brandrow{ flex-direction:column; align-items:flex-start; }
+    .headcluster{ align-items:flex-start; text-align:left; }
+    .stat-cap{ text-align:left; }
+  }
+  @media (max-width:400px){
+    .demolabel .dl-txt{ display:none; }
+    .demoseg button{ padding:0.38rem 0.66rem; }
+  }
+
+  /* ==================== MOTION — honor reduced-motion ==================== */
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:0.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:0.01ms !important; scroll-behavior:auto !important;
+    }
+    .signage, .door, .doorfoot{ opacity:1; }
+    .btn-primary:hover{ transform:none; }
+  }
+</style>
+</head>
+<body>
+  <main class="login">
+
+    <!-- ==================== THE FRONT DOOR (states 1–4) ==================== -->
+    <div class="doorwrap" id="doorView">
+
+      <!-- wordmark signage, over the open garden air -->
+      <div class="signage">
+        <p class="eyebrow">A private theatre archive</p>
+        <h1 class="wordmark">Instant <span class="thin">Re<span class="dot">&middot;</span>Play</span></h1>
+        <p class="tagline">A record of time well spent.</p>
+      </div>
+
+      <!-- the single floating plaster plane -->
+      <section class="door" aria-labelledby="doorHeading">
+        <p id="live" class="visually-hidden" role="status" aria-live="polite"></p>
+
+        <!-- STATE 1 — Enter email -->
+        <div class="panel panel--signin" data-state="signin">
+          <h2 id="doorHeading" tabindex="-1">Welcome in.</h2>
+          <p class="lead" id="inviteHint">Instant Re-Play is private. If you have been invited, enter your email and we will send you a sign-in link.</p>
+
+          <form class="form" id="signinForm" novalidate>
+            <div class="field" id="emailField">
+              <label for="email">Email address</label>
+              <input class="input" id="email" name="email" type="email" inputmode="email"
+                     autocomplete="email" spellcheck="false"
+                     placeholder="you@example.com"
+                     aria-describedby="inviteHint emailErr" />
+              <span class="err" id="emailErr" role="alert">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4M12 16h.01"></path></svg>
+                That does not look like an email address. Check it and try again.
+              </span>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block" id="sendBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+              Send me a link
+            </button>
+          </form>
+        </div>
+
+        <!-- STATE 2 — Check your email -->
+        <div class="panel panel--sent" data-state="sent" hidden>
+          <span class="glyph pos" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3.5 7 8.5 6 8.5-6"></path></svg>
+          </span>
+          <h2 tabindex="-1">Check your email</h2>
+          <p class="lead">We sent a sign-in link to <strong id="sentEmail">arthur.gibson@icloud.com</strong>. Click it to come in.</p>
+          <p class="micro">It can take a moment to arrive. If it is not there, check your spam folder.</p>
+          <div class="back-actions">
+            <button type="button" class="btn btn-ghost btn-md" data-back>Use a different email</button>
+          </div>
+        </div>
+
+        <!-- STATE 3 — Not invited -->
+        <div class="panel panel--denied" data-state="denied" hidden>
+          <span class="glyph neutral" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"></path><path d="M4 20h16"></path><path d="M14 12v.01"></path></svg>
+          </span>
+          <h2 tabindex="-1">You are not on the list</h2>
+          <p class="lead">This archive is invite-only, and that email is not on the list. If you think that is a mistake, check with whoever invited you.</p>
+          <div class="back-actions">
+            <button type="button" class="btn btn-ghost btn-md" data-back>Try a different email</button>
+          </div>
+        </div>
+
+        <!-- STATE 4 — Link expired / invalid -->
+        <div class="panel panel--expired" data-state="expired" hidden>
+          <span class="glyph neutral" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+          </span>
+          <h2 tabindex="-1">That link did not work</h2>
+          <p class="lead">That link did not work or has expired. Let us send a fresh one.</p>
+          <div class="back-actions">
+            <button type="button" class="btn btn-ghost btn-md" data-back>Enter my email again</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- invite-only reassurance, tucked under the door -->
+      <p class="doorfoot">
+        <span class="lock" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span>
+        No passwords, ever. We only send a one-time link to an invited address.
+      </p>
+    </div>
+
+    <!-- ==================== SIGNED-IN HEADER (state 5: sign-out affordance) ==================== -->
+    <div class="headerview" id="headerView" hidden>
+      <header class="sky">
+        <div class="shell">
+          <div class="brandrow">
+            <div class="brand">
+              <p class="eyebrow">A private theatre archive</p>
+              <h1 class="wordmark">Instant <span class="thin">Re<span class="dot">&middot;</span>Play</span></h1>
+              <p class="tagline">A record of time well spent.</p>
+            </div>
+            <div class="headcluster">
+              <span class="signedas">Signed in <span class="who">arthur.gibson@icloud.com</span></span>
+              <form class="signout" method="post" action="/auth/signout" id="signoutForm">
+                <button type="submit" class="btn btn-ghost btn-sm" id="signoutBtn">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>
+                  Sign out
+                </button>
+              </form>
+              <div class="stat">
+                <span class="stat-num">128</span>
+                <span class="stat-cap">plays logged<br>since 2019</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="shell">
+        <p class="viewcap">This is how the header greets an invited, signed-in visitor. Sign out is a quiet ghost in the action cluster, a server-side POST that ends the session, never wearing the reserved aloe accent.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== DEMO TOGGLE — clearly non-shipping ==================== -->
+  <div class="demobar" role="group" aria-label="Preview the login states (demo, not part of the app)">
+    <span class="demolabel">
+      <span class="dl-ico" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+      <span class="dl-txt">Preview</span>
+    </span>
+    <div class="demoseg">
+      <button type="button" data-go="signin" aria-pressed="true">Sign in</button>
+      <button type="button" data-go="sent" aria-pressed="false">Check email</button>
+      <button type="button" data-go="denied" aria-pressed="false">Not invited</button>
+      <button type="button" data-go="expired" aria-pressed="false">Link expired</button>
+      <button type="button" data-go="header" aria-pressed="false">Signed in</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  var doorView   = document.getElementById("doorView");
+  var headerView = document.getElementById("headerView");
+  var live       = document.getElementById("live");
+
+  var panels = {};
+  Array.prototype.forEach.call(doorView.querySelectorAll(".panel"), function(p){
+    panels[p.getAttribute("data-state")] = p;
+  });
+
+  var signinForm = document.getElementById("signinForm");
+  var emailInput = document.getElementById("email");
+  var emailField = document.getElementById("emailField");
+  var sentEmail  = document.getElementById("sentEmail");
+
+  var demoBtns = Array.prototype.slice.call(document.querySelectorAll(".demoseg button"));
+
+  var DEFAULT_EMAIL = "arthur.gibson@icloud.com";
+  var lastEmail = DEFAULT_EMAIL;
+
+  var LIVE = {
+    signin:  "Sign in. Enter your email and we will send a sign-in link.",
+    sent:    function(){ return "Check your email. We sent a sign-in link to " + lastEmail + "."; },
+    denied:  "This archive is invite-only. That email is not on the invite list.",
+    expired: "That sign-in link did not work or has expired. Request a fresh one.",
+    header:  "Signed in. A sign out control is in the header."
+  };
+
+  function announce(name){
+    var v = LIVE[name];
+    live.textContent = (typeof v === "function") ? v() : v;
+  }
+
+  function setPressed(name){
+    demoBtns.forEach(function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-go") === name ? "true" : "false");
+    });
+  }
+
+  function showDoorPanel(name, focus){
+    headerView.hidden = true;
+    doorView.hidden = false;
+    Object.keys(panels).forEach(function(k){
+      var on = (k === name);
+      panels[k].hidden = !on;
+      panels[k].classList.remove("is-anim");
+    });
+    var panel = panels[name];
+    if(panel && !REDUCED){
+      /* re-trigger the settle animation on the incoming panel */
+      void panel.offsetWidth;
+      panel.classList.add("is-anim");
+    }
+    if(focus){
+      var target = (name === "signin") ? emailInput : panel.querySelector("h2");
+      if(target){ target.focus(); if(name === "signin" && emailInput.select) emailInput.select(); }
+    }
+  }
+
+  function showHeader(focus){
+    doorView.hidden = true;
+    headerView.hidden = false;
+    if(focus){ document.getElementById("signoutBtn").focus(); }
+  }
+
+  function go(name, focus){
+    if(name === "header"){ showHeader(focus); }
+    else { showDoorPanel(name, focus); }
+    if(name === "sent"){ sentEmail.textContent = lastEmail; }
+    setPressed(name);
+    announce(name);
+  }
+
+  /* ---------- sign-in submit: inline-validate, then "check your email" ---------- */
+  signinForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var val = emailInput.value.trim();
+    if(!EMAIL_RE.test(val)){
+      emailField.classList.add("invalid");
+      emailInput.setAttribute("aria-invalid", "true");
+      emailInput.focus();
+      return;   /* stay on enter-email (FR-02) */
+    }
+    emailField.classList.remove("invalid");
+    emailInput.removeAttribute("aria-invalid");
+    lastEmail = val;
+    go("sent", true);
+  });
+
+  emailInput.addEventListener("input", function(){
+    if(emailField.classList.contains("invalid") && EMAIL_RE.test(emailInput.value.trim())){
+      emailField.classList.remove("invalid");
+      emailInput.removeAttribute("aria-invalid");
+    }
+  });
+
+  /* ---------- quiet "back / try again" controls return to enter-email ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-back]"), function(btn){
+    btn.addEventListener("click", function(){ go("signin", true); });
+  });
+
+  /* ---------- sign-out (mock: no navigation) ---------- */
+  document.getElementById("signoutForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    go("signin", true);
+  });
+
+  /* ---------- demo toggle (non-shipping): switch states without yanking
+       focus, so a reviewer can click through; the live region still speaks ---------- */
+  demoBtns.forEach(function(b){
+    b.addEventListener("click", function(){ go(b.getAttribute("data-go"), false); });
+  });
+
+  /* ---------- start on the enter-email state (no focus steal on load) ---------- */
+  go("signin", false);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "project": {
+    "name": "Instant Re-Play",
+    "type": "web-app",
+    "entryPath": "new"
+  },
+  "stack": {
+    "frontend": "Next.js (App Router)",
+    "language": "TypeScript",
+    "styling": "Tailwind CSS",
+    "components": "shadcn/ui",
+    "orm": "Drizzle ORM",
+    "runtime": "node",
+    "stateManagement": null,
+    "api": "Next.js Server Actions + Route Handlers"
+  },
+  "backend": {
+    "database": "postgres",
+    "provider": "neon",
+    "hosting": "vercel-marketplace"
+  },
+  "auth": {
+    "provider": "supabase",
+    "strategy": "magic-link + allowlist",
+    "note": "Application-level auth (feature: shared-login). Passwordless magic-link sign-in via Supabase Auth (@supabase/ssr, httpOnly cookie sessions), gated by a server-only ALLOWED_EMAILS invite allowlist. A valid session is necessary but not sufficient: enforced in middleware and re-checked at every boundary (defense in depth). Shared single archive in Neon; no per-user data. No service-role key. Fail closed on misconfiguration."
+  },
+  "testing": {
+    "runner": "vitest",
+    "e2e": "playwright"
+  },
+  "deploy": {
+    "target": "vercel",
+    "environment": null
+  },
+  "integrations": null,
+  "secrets": null,
+  "createdAt": "2026-07-18T15:05:00Z",
+  "updatedAt": "2026-07-18T15:05:00Z"
+}

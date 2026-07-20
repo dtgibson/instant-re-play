@@ -1,0 +1,1440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Instant Re-Play — The Play Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     INSTANT RE-PLAY — The Play Log
+     Lens: Neutra BIOREALISM — architecture dissolving into landscape.
+     The archive is seen through a floor-to-ceiling window onto a garden:
+     a whisper of pool-and-sky with a low horizon up top, warm golden-hour
+     plaster ground below, and the log staged as long, low CANTILEVERED
+     PLANES that float over the garden on soft, warm walnut shadows.
+     Garden green (aloe) is the single sharp landscape accent; teak wood
+     and desert clay are the materials; open space is used as literal air.
+
+     Light golden-hour is the hero theme; a tokenized dark theme is kept
+     on file (viewer preference) but never competes with the daylight.
+     ============================================================ */
+
+  :root{
+    /* --- floating plaster planes (warm, sunlit) --- */
+    --plaster:      #F8F1E3;   /* row plane base */
+    --plaster-hi:   #FDF8EE;   /* highest / hover plane */
+    --plaster-top:  #FFFCF5;   /* sunlit top edge of a lifted plane */
+    --recess:       #F1E7D4;   /* inset inputs, quiet fills */
+    --recess-soft:  #EFE6D2;
+
+    /* --- atmospheric garden ground (never a flat slab) --- */
+    --ground-1:     #F3EAD8;
+    --ground-2:     #EFE6D2;
+    --ground-3:     #E9DAC0;
+    --ground-4:     #E3D2B4;
+
+    /* --- warm inks (no pure black; olive/walnut bias) --- */
+    --ink:          #2B261E;   /* primary text / titles */
+    --ink-2:        #4A4234;   /* secondary text + values */
+    --ink-3:        #6B5D46;   /* muted (AA, >=13px ok) */
+    --ink-faint:    #8A7A5E;   /* decorative / large only */
+    --label-ink:    #574123;   /* dedicated small-caps label ink (AA) */
+
+    /* --- wood: walnut & teak --- */
+    --walnut:       #7A5233;
+    --walnut-deep:  #4B2F19;
+    --teak:         #9A6738;
+    --teak-soft:    #C0A176;
+
+    /* --- the single landscape accent: garden aloe (primary action only) --- */
+    --aloe:         #3B6B4C;
+    --aloe-hi:      #47795A;   /* sunlit top of the accent gradient */
+    --aloe-deep:    #2F5A3F;
+    --aloe-line:    rgba(59,107,76,0.34);
+    --aloe-tint:    rgba(59,107,76,0.10);
+    --aloe-wash:    #E3EADF;
+    --on-aloe:      #FDF8EE;
+
+    /* --- desert clay: DESTRUCTIVE / semantic only --- */
+    --terra:        #A5502F;
+    --terra-deep:   #8C3F22;
+    --terra-tint:   rgba(165,80,47,0.10);
+    --on-terra:     #FDF7EC;
+
+    /* --- pool-and-sky (horizon / indoor-outdoor) --- */
+    --sky:          #C7DAD8;
+    --sky-soft:     #DCE7E1;
+
+    /* --- warm structural lines (steel mullions, hairlines) --- */
+    --sand:         #E0D5C0;
+    --sand-soft:    #EADFCA;
+    --hair:         #D8C5A2;
+    --steel:        #38332B;   /* warm charcoal (toast) */
+
+    /* --- warm walnut CANTILEVER shadows (roof-overhang softness) --- */
+    --sh-plane:  0 20px 40px -24px rgba(74,46,22,0.30), 0 3px 9px -5px rgba(74,46,22,0.15);
+    --sh-lift:   0 30px 58px -26px rgba(74,46,22,0.40), 0 6px 16px -7px rgba(74,46,22,0.18);
+    --sh-float:  0 44px 90px -34px rgba(56,34,14,0.46), 0 10px 26px -12px rgba(56,34,14,0.26);
+    --hi-edge:   inset 0 1px 0 rgba(255,251,243,0.75);
+
+    /* --- type scale (~1.25 steps) --- */
+    --fs-micro:  0.6875rem;   /* 11 — signage micro-labels */
+    --fs-label:  0.75rem;     /* 12 — labels / columns */
+    --fs-small:  0.8125rem;   /* 13 */
+    --fs-body:   0.9375rem;   /* 15 — body */
+    --fs-lead:   1.0625rem;   /* 17 */
+    --fs-name:   1.375rem;    /* 22 — play title */
+    --fs-h:      1.5rem;      /* drawer / state headings */
+    --fs-mark:   clamp(1.45rem, 1.05rem + 1.9vw, 2.1rem);
+    --fs-stat:   clamp(2.1rem, 1.5rem + 2.6vw, 3rem);
+
+    /* elevation grid: Date | Production | Venue | Director | Cast | Entry */
+    --cols: 104px minmax(176px,1.55fr) minmax(128px,0.95fr) minmax(116px,0.9fr) minmax(160px,1.4fr) 84px;
+
+    --shell: 1180px;
+    --r: 10px;
+    --r-sm: 4px;
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --focus: 0 0 0 3px rgba(59,107,76,0.34);
+  }
+
+  /* ---- tokenized dark theme, kept on file; daylight remains the hero ---- */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --plaster:#242019; --plaster-hi:#2C2820; --plaster-top:#322E25; --recess:#201C16; --recess-soft:#1E1A14;
+      --ground-1:#1C1913; --ground-2:#191610; --ground-3:#15120D; --ground-4:#100E0A;
+      --ink:#F1E9D7; --ink-2:#CFC5AE; --ink-3:#A99C82; --ink-faint:#87795F; --label-ink:#D8C29A;
+      --walnut:#C79E76; --walnut-deep:#E0C39B; --teak:#C79E76; --teak-soft:#7C6141;
+      --aloe:#83B48E; --aloe-hi:#98C6A1; --aloe-deep:#98C6A1; --aloe-line:rgba(131,180,142,0.42); --aloe-tint:rgba(131,180,142,0.14);
+      --aloe-wash:#2A3A31; --on-aloe:#151913;
+      --terra:#D67A54; --terra-deep:#E58F68; --terra-tint:rgba(214,122,84,0.16); --on-terra:#181410;
+      --sky:#34483F; --sky-soft:#28352F;
+      --sand:#3A342A; --sand-soft:#322D24; --hair:#463D2E; --steel:#0F0D0A;
+      --sh-plane:0 20px 42px -24px rgba(0,0,0,0.6), 0 3px 9px -5px rgba(0,0,0,0.4);
+      --sh-lift:0 30px 60px -26px rgba(0,0,0,0.7), 0 6px 16px -7px rgba(0,0,0,0.45);
+      --sh-float:0 44px 92px -34px rgba(0,0,0,0.72), 0 10px 26px -12px rgba(0,0,0,0.5);
+      --hi-edge:inset 0 1px 0 rgba(255,251,243,0.06);
+      --on-aloe:#151913; --focus:0 0 0 3px rgba(131,180,142,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --plaster:#242019; --plaster-hi:#2C2820; --plaster-top:#322E25; --recess:#201C16; --recess-soft:#1E1A14;
+    --ground-1:#1C1913; --ground-2:#191610; --ground-3:#15120D; --ground-4:#100E0A;
+    --ink:#F1E9D7; --ink-2:#CFC5AE; --ink-3:#A99C82; --ink-faint:#87795F; --label-ink:#D8C29A;
+    --walnut:#C79E76; --walnut-deep:#E0C39B; --teak:#C79E76; --teak-soft:#7C6141;
+    --aloe:#83B48E; --aloe-hi:#98C6A1; --aloe-deep:#98C6A1; --aloe-line:rgba(131,180,142,0.42); --aloe-tint:rgba(131,180,142,0.14);
+    --aloe-wash:#2A3A31; --on-aloe:#151913;
+    --terra:#D67A54; --terra-deep:#E58F68; --terra-tint:rgba(214,122,84,0.16); --on-terra:#181410;
+    --sky:#34483F; --sky-soft:#28352F;
+    --sand:#3A342A; --sand-soft:#322D24; --hair:#463D2E; --steel:#0F0D0A;
+    --sh-plane:0 20px 42px -24px rgba(0,0,0,0.6), 0 3px 9px -5px rgba(0,0,0,0.4);
+    --sh-lift:0 30px 60px -26px rgba(0,0,0,0.7), 0 6px 16px -7px rgba(0,0,0,0.45);
+    --sh-float:0 44px 92px -34px rgba(0,0,0,0.72), 0 10px 26px -12px rgba(0,0,0,0.5);
+    --hi-edge:inset 0 1px 0 rgba(255,251,243,0.06);
+    --focus:0 0 0 3px rgba(131,180,142,0.4);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--ink-2);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:var(--fs-body);
+    line-height:1.6;
+    letter-spacing:0.005em;
+    text-rendering:optimizeLegibility;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    /* golden-hour garden: a warm sun glow + a cool pool-sky reflection up
+       top, an aloe hint low-left, over a layered warm plaster ground. */
+    background:
+      radial-gradient(88% 52% at 70% -10%, rgba(255,231,186,0.55) 0%, rgba(255,231,186,0) 46%),
+      radial-gradient(120% 78% at 84% -8%, rgba(199,218,216,0.55) 0%, rgba(199,218,216,0) 52%),
+      radial-gradient(96% 62% at 4% 108%, rgba(59,107,76,0.09) 0%, rgba(59,107,76,0) 56%),
+      linear-gradient(178deg, var(--ground-1) 0%, var(--ground-2) 44%, var(--ground-3) 74%, var(--ground-4) 100%);
+    background-attachment:fixed;
+  }
+
+  /* whisper-quiet plaster grain */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    opacity:0.05; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) body::before{ mix-blend-mode:screen; opacity:0.04; } }
+  :root[data-theme="dark"] body::before{ mix-blend-mode:screen; opacity:0.04; }
+
+  /* the distant horizon line — indoor/outdoor flow across the whole view */
+  body::after{
+    content:""; position:fixed; left:0; right:0; top:38vh; height:1px; z-index:0; pointer-events:none;
+    background:linear-gradient(90deg, transparent, rgba(122,79,44,0.16) 18%, rgba(122,79,44,0.16) 82%, transparent);
+  }
+
+  ::selection{ background:var(--aloe-wash); color:var(--ink); }
+
+  a{ color:inherit; }
+  button{ font-family:inherit; color:inherit; }
+  :focus-visible{ outline:none; box-shadow:var(--focus); border-radius:var(--r-sm); }
+
+  .shell{ position:relative; z-index:1; max-width:var(--shell); margin:0 auto; padding:0 clamp(1rem,4vw,3rem); }
+
+  .visually-hidden{
+    position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  }
+
+  /* ==================== HEADER — the window onto the garden ==================== */
+  header.sky{
+    position:relative;
+    padding-top:clamp(2.2rem, 5vw, 4.4rem);
+    padding-bottom:clamp(2.2rem, 5vw, 3.6rem);
+    background:linear-gradient(180deg, rgba(199,218,216,0.7) 0%, rgba(220,231,225,0.28) 38%, rgba(244,238,226,0) 100%);
+    overflow:hidden;
+  }
+  header.sky::after{ /* horizon sill: a low, long cantilever edge under the sky */
+    content:""; position:absolute; left:0; right:0; bottom:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--hair) 10%, var(--hair) 90%, transparent);
+  }
+  .brandrow{ display:flex; align-items:flex-end; justify-content:space-between; gap:1.4rem 2.4rem; flex-wrap:wrap; }
+  .brand{ min-width:0; opacity:0; animation:rise 280ms var(--ease) 40ms forwards; }
+  .eyebrow{
+    display:flex; align-items:center; gap:0.6rem; margin:0 0 0.7rem;
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label);
+    letter-spacing:0.34em; text-transform:uppercase; color:var(--label-ink);
+  }
+  h1.wordmark{
+    margin:0; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-mark);
+    line-height:0.96; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink); text-wrap:balance;
+  }
+  h1.wordmark .thin{ font-weight:300; color:var(--ink-2); }
+  h1.wordmark .dot{ color:var(--aloe); font-weight:400; }
+  .tagline{
+    margin:0.9rem 0 0; max-width:38ch; font-size:var(--fs-lead); line-height:1.45;
+    color:var(--ink-2); font-style:italic;
+  }
+  .stat{
+    display:flex; align-items:baseline; gap:0.85rem; padding-left:1.5rem; padding-bottom:0.2rem;
+    border-left:1px solid var(--hair); white-space:nowrap;
+    opacity:0; animation:rise 280ms var(--ease) 120ms forwards;
+  }
+  .stat-num{
+    font-family:'Jost', sans-serif; font-weight:300; font-size:var(--fs-stat); line-height:0.82;
+    color:var(--walnut-deep); font-variant-numeric:tabular-nums;
+  }
+  .stat-cap{
+    font-family:'Jost', sans-serif; font-size:var(--fs-micro); letter-spacing:0.2em;
+    text-transform:uppercase; color:var(--label-ink); line-height:1.55;
+  }
+
+  /* ==================== CONTROL BAR — a cantilevered plane ==================== */
+  main{ padding-bottom:4.5rem; }
+  .controls{
+    position:relative; z-index:5;
+    margin-top:clamp(-2.2rem, -2.4vw, -1.2rem);
+    display:flex; align-items:center; gap:0.9rem 1.2rem; flex-wrap:wrap;
+    padding:clamp(0.85rem,2vw,1.15rem) clamp(1rem,2.4vw,1.5rem);
+    background:linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border:1px solid var(--sand);
+    border-radius:var(--r);
+    box-shadow:var(--sh-lift), var(--hi-edge);
+    opacity:0; animation:rise 280ms var(--ease) 150ms forwards;
+  }
+  .search{ position:relative; flex:1 1 280px; min-width:0; display:flex; align-items:center; }
+  .search .ico{ position:absolute; left:0.9rem; color:var(--walnut); display:flex; pointer-events:none; }
+  .search input{
+    width:100%; font:inherit; font-size:var(--fs-body); color:var(--ink);
+    padding:0.72rem 2.5rem 0.72rem 2.65rem;
+    background:var(--recess); border:1px solid var(--sand); border-radius:var(--r-sm);
+    box-shadow:inset 0 1px 3px rgba(74,46,22,0.06);
+    transition:border-color 180ms var(--ease), box-shadow 180ms var(--ease), background 180ms var(--ease);
+  }
+  .search input::placeholder{ color:var(--ink-3); }
+  .search input:focus{
+    outline:none; border-color:var(--aloe-line); background:var(--plaster-hi);
+    box-shadow:inset 0 1px 3px rgba(74,46,22,0.04), var(--focus);
+  }
+  .search .clear-x{
+    position:absolute; right:0.5rem; display:none; align-items:center; justify-content:center;
+    width:1.7rem; height:1.7rem; border:0; border-radius:999px; background:transparent;
+    color:var(--ink-3); cursor:pointer; transition:color 160ms var(--ease), background 160ms var(--ease);
+  }
+  .search .clear-x:hover{ color:var(--ink); background:var(--sand-soft); }
+  .search.has-value .clear-x{ display:inline-flex; }
+
+  /* mobile-only sort segment (desktop uses sortable column headers) */
+  .sort-mobile{ display:none; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; cursor:pointer;
+    font-family:'Jost', sans-serif; font-weight:500; letter-spacing:0.05em;
+    border:1px solid transparent; border-radius:var(--r-sm);
+    transition:background 200ms var(--ease), box-shadow 200ms var(--ease), transform 160ms var(--ease), border-color 180ms var(--ease), color 180ms var(--ease), filter 160ms var(--ease);
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{
+    color:var(--on-aloe); background:linear-gradient(180deg, var(--aloe-hi), var(--aloe));
+    border-color:var(--aloe-deep); box-shadow:0 12px 26px -14px rgba(47,90,63,0.7), var(--hi-edge);
+  }
+  .btn-primary:hover{ background:linear-gradient(180deg, var(--aloe), var(--aloe-deep)); box-shadow:0 18px 32px -14px rgba(47,90,63,0.78); transform:translateY(-1px); }
+  .btn-primary:active{ transform:translateY(0); }
+  .btn-ghost{ color:var(--ink-2); background:var(--recess); border-color:var(--sand); }
+  .btn-ghost:hover{ background:var(--plaster-hi); border-color:var(--hair); }
+  .btn-lg{ font-size:var(--fs-body); padding:0.72rem 1.2rem; }
+  .btn-md{ font-size:var(--fs-small); padding:0.62rem 1.05rem; }
+  .add-btn{ flex:0 0 auto; margin-left:auto; text-transform:uppercase; letter-spacing:0.08em; }
+
+  /* ==================== ACTIVE FILTER BANNER ==================== */
+  .filterbar{
+    display:none; align-items:center; gap:0.8rem; flex-wrap:wrap;
+    margin-top:1.1rem; padding:0.7rem 1.05rem;
+    background:linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border:1px solid var(--sand); border-left:3px solid var(--teak);
+    border-radius:var(--r-sm); box-shadow:var(--sh-plane);
+  }
+  .filterbar.open{ display:flex; animation:slideDown 260ms var(--ease) both; }
+  .filterbar .fb-ico{ color:var(--teak); display:flex; flex:0 0 auto; }
+  .filterbar .fb-text{ font-size:var(--fs-body); color:var(--ink-2); min-width:0; }
+  .filterbar .fb-text strong{ font-weight:600; color:var(--walnut-deep); }
+  .filterbar .fb-text .fb-lbl{
+    font-family:'Jost', sans-serif; font-size:var(--fs-label); letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--label-ink); margin-right:0.4rem;
+  }
+  .fb-clear{
+    margin-left:auto; display:inline-flex; align-items:center; gap:0.4rem;
+    font-family:'Jost', sans-serif; font-size:var(--fs-label); letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--walnut-deep); background:var(--plaster-hi); border:1px solid var(--hair);
+    border-radius:var(--r-sm); padding:0.36rem 0.7rem; cursor:pointer;
+    transition:background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
+  }
+  .fb-clear:hover{ background:var(--plaster-hi); border-color:var(--teak); color:var(--ink); }
+
+  /* ==================== THE LOG — stacked cantilevered planes (elevation) ==================== */
+  .listwrap{ margin-top:clamp(1.6rem, 3vw, 2.4rem); }
+
+  .logtable{ display:block; }
+
+  /* header band: structural label row that floats above the planes (desktop) */
+  .thead{
+    display:grid; grid-template-columns:var(--cols); align-items:end; gap:0 0;
+    padding:0 clamp(1rem,2vw,1.6rem) 0.7rem;
+    border:1px solid transparent;   /* match the 1px border of entry planes so columns align */
+  }
+  .thead .th{
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label);
+    letter-spacing:0.2em; text-transform:uppercase; color:var(--label-ink);
+    padding-left:0.15rem;
+  }
+  .thead .th button{
+    display:inline-flex; align-items:center; gap:0.36rem;
+    font:inherit; letter-spacing:inherit; text-transform:inherit; color:inherit;
+    background:none; border:0; padding:0.15rem 0.15rem; margin:-0.15rem -0.15rem; cursor:pointer; border-radius:var(--r-sm);
+    transition:color 160ms var(--ease);
+  }
+  .thead .th button:hover{ color:var(--ink); }
+  .thead .th .arw{ width:12px; height:12px; opacity:0; transition:opacity 160ms var(--ease), transform 200ms var(--ease); color:var(--aloe-deep); }
+  .thead .th[aria-sort="ascending"] button,
+  .thead .th[aria-sort="descending"] button{ color:var(--walnut-deep); }
+  .thead .th[aria-sort] .arw{ opacity:1; }
+  .thead .th[aria-sort="ascending"] .arw{ transform:rotate(180deg); }
+  .thead .th-actions{ text-align:right; }
+
+  .ledger{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.7rem; }
+
+  /* each entry is a long, low floating plaster PLANE — a resting warm
+     cantilever shadow gives real depth over the garden (no nested cards). */
+  .entry{
+    display:grid; grid-template-columns:var(--cols); align-items:start; gap:0 0;
+    padding:clamp(1rem,1.8vw,1.35rem) clamp(1rem,2vw,1.6rem);
+    background:linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border:1px solid var(--sand); border-radius:var(--r);
+    box-shadow:var(--sh-plane), var(--hi-edge);
+    transition:box-shadow 220ms var(--ease), transform 200ms var(--ease), background 200ms var(--ease);
+  }
+  .entry:hover{
+    background:linear-gradient(180deg, var(--plaster-top), var(--plaster-hi));
+    box-shadow:var(--sh-lift), var(--hi-edge); transform:translateY(-1px);
+  }
+  .entry.settling{ animation:settle 280ms var(--ease) both; }
+  .entry.removing{ opacity:0; transform:translateY(-6px) scale(0.995); }
+
+  .cell{ min-width:0; }
+  .cell + .cell{ padding-left:1.1rem; }
+  .celllabel{ display:none; }
+
+  /* date rail — clear, unambiguous hierarchy (day+month, then a readable year) */
+  .cell-date{ padding-top:0.2rem; }
+  .d-dm{
+    display:block; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-lead);
+    letter-spacing:0.01em; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.1; white-space:nowrap;
+  }
+  .d-yr{
+    display:block; margin-top:0.1rem; font-family:'Jost', sans-serif; font-size:var(--fs-small);
+    letter-spacing:0.1em; color:var(--label-ink); font-variant-numeric:tabular-nums;
+  }
+  .d-none{ font-style:italic; color:var(--ink-3); font-size:var(--fs-small); }
+
+  .playname{
+    margin:0; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-name);
+    line-height:1.18; letter-spacing:-0.008em; color:var(--ink); text-wrap:balance; overflow-wrap:anywhere;
+  }
+  .future-tag{
+    display:inline-block; margin-top:0.4rem;
+    font-family:'Jost', sans-serif; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--aloe-deep); background:var(--aloe-tint); border:1px solid var(--aloe-line);
+    border-radius:var(--r-sm); padding:0.1rem 0.45rem; vertical-align:middle;
+  }
+
+  .metalabel{
+    display:block; margin-bottom:0.35rem;
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-micro);
+    letter-spacing:0.16em; text-transform:uppercase; color:var(--label-ink);
+  }
+  .valwrap{ font-size:var(--fs-body); color:var(--ink-2); line-height:1.5; overflow-wrap:anywhere; }
+  .cast-line{ display:inline; }
+
+  /* click-to-filter affordance = the VALUE, marked by a dotted "sill"
+     underline (shape, not colour). Unmistakably interactive. */
+  .fval{
+    display:inline; font:inherit; font-size:var(--fs-body); color:var(--ink);
+    background:transparent; border:0; padding:0 1px; margin:0; cursor:pointer;
+    text-decoration:underline; text-decoration-style:dotted; text-decoration-color:var(--teak-soft);
+    text-decoration-thickness:1.5px; text-underline-offset:3px; border-radius:3px; overflow-wrap:anywhere;
+    transition:color 150ms var(--ease), background 150ms var(--ease), text-decoration-color 150ms var(--ease);
+  }
+  .fval:hover{ color:var(--aloe-deep); background:var(--aloe-tint); text-decoration-color:var(--aloe); }
+  .fval.is-active{ color:var(--aloe-deep); text-decoration-color:var(--aloe); background:var(--aloe-tint); font-weight:600; }
+
+  /* venue: a small square "plan" glyph signals a place that carries NO
+     external link — reinforcing that only people (below) link out. */
+  .fval.venue::before{
+    content:""; display:inline-block; width:6px; height:6px; margin-right:0.4rem;
+    border:1.4px solid var(--teak); opacity:0.7; vertical-align:middle;
+  }
+
+  /* IMDb link = a DISTINCT boxed icon beside the name (shape + icon, not
+     colour) so one click is filter and the other is the external link. */
+  .person{ display:inline-flex; align-items:center; gap:1px; white-space:nowrap; }
+  a.imdb{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:1.2rem; height:1.2rem; margin:0 0.06rem 0 0.22rem;
+    border:1px solid var(--hair); border-radius:3px; color:var(--walnut);
+    background:var(--plaster-hi); text-decoration:none; vertical-align:-0.2em;
+    transition:color 150ms var(--ease), border-color 150ms var(--ease), background 150ms var(--ease);
+  }
+  a.imdb svg{ width:11px; height:11px; }
+  a.imdb:hover{ color:var(--terra-deep); border-color:var(--teak); background:var(--recess); }
+  .cast-sep{ color:var(--ink-3); }
+
+  .cell-actions{ display:flex; justify-content:flex-end; gap:0.3rem; padding-top:0.1rem; }
+  .iconbtn{
+    display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;
+    width:2.1rem; height:2.1rem; border:1px solid transparent; border-radius:var(--r-sm);
+    background:transparent; color:var(--ink-3); cursor:pointer;
+    transition:color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
+  }
+  .iconbtn:hover{ color:var(--walnut-deep); background:var(--sand-soft); border-color:var(--sand); }
+  .iconbtn.danger:hover{ color:var(--terra-deep); border-color:var(--terra); background:var(--terra-tint); }
+  .iconbtn svg{ width:16px; height:16px; }
+  .iconbtn .btn-txt{ display:none; }
+
+  /* ==================== EMPTY & NO-RESULTS STATES ==================== */
+  .state{
+    display:none; flex-direction:column; align-items:center; text-align:center; gap:0.5rem;
+    padding:clamp(2.8rem,6vw,4.8rem) 1.5rem;
+    background:linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border:1px solid var(--sand); border-radius:var(--r); box-shadow:var(--sh-plane), var(--hi-edge);
+  }
+  .state.show{ display:flex; animation:rise 260ms var(--ease) both; }
+  .state .glyph{
+    display:grid; place-items:center; width:64px; height:64px; margin-bottom:0.7rem;
+    color:var(--aloe); border:1px solid var(--aloe-line); border-radius:50%; background:var(--aloe-tint);
+  }
+  .state .glyph svg{ width:30px; height:30px; }
+  .state h2{
+    margin:0.1rem 0 0; font-family:'Jost', sans-serif; font-weight:400; font-size:var(--fs-h);
+    letter-spacing:0.01em; color:var(--ink); text-wrap:balance;
+  }
+  .state p{ margin:0 0 0.6rem; max-width:44ch; color:var(--ink-3); font-size:var(--fs-lead); line-height:1.55; }
+
+  /* ==================== DRAWER (add / edit) ==================== */
+  .scrim{
+    position:fixed; inset:0; z-index:40; background:rgba(56,34,14,0.34);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+    opacity:0; visibility:hidden; transition:opacity 220ms var(--ease), visibility 220ms var(--ease);
+  }
+  .scrim.open{ opacity:1; visibility:visible; }
+  .drawer{
+    position:fixed; top:0; right:0; bottom:0; z-index:50; width:min(468px,100%);
+    display:flex; flex-direction:column;
+    background:
+      radial-gradient(120% 40% at 82% 0%, rgba(255,231,186,0.45), rgba(255,231,186,0) 60%),
+      linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border-left:1px solid var(--sand); box-shadow:var(--sh-float);
+    transform:translateX(101%); visibility:hidden;
+    transition:transform 280ms var(--ease), visibility 280ms var(--ease); will-change:transform;
+  }
+  .drawer.open{ transform:translateX(0); visibility:visible; }
+  .drawer-head{
+    position:relative; flex:0 0 auto;
+    padding:clamp(1.3rem,3vw,1.9rem) clamp(1.3rem,3vw,1.9rem) 1.1rem;
+    border-bottom:1px solid var(--sand);
+    background:linear-gradient(180deg, rgba(199,218,216,0.5) 0%, rgba(220,231,225,0) 100%);
+  }
+  .drawer-head .kicker{
+    margin:0 0 0.4rem; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label);
+    letter-spacing:0.28em; text-transform:uppercase; color:var(--aloe-deep);
+  }
+  .drawer-head h2{
+    margin:0; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-h);
+    letter-spacing:-0.006em; color:var(--ink); overflow-wrap:anywhere; padding-right:2.6rem;
+  }
+  .drawer-close{
+    position:absolute; top:clamp(1.2rem,3vw,1.7rem); right:clamp(1.1rem,3vw,1.5rem);
+    width:2.2rem; height:2.2rem; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--sand); border-radius:var(--r-sm); background:var(--recess); color:var(--ink-3);
+    cursor:pointer; transition:color 160ms var(--ease), background 160ms var(--ease);
+  }
+  .drawer-close:hover{ color:var(--ink); background:var(--plaster-hi); }
+  .drawer-body{ padding:clamp(1.2rem,3vw,1.7rem); overflow-y:auto; flex:1 1 auto; }
+
+  .field{ margin-bottom:1.25rem; }
+  .field > label, .field .lab{
+    display:block; margin-bottom:0.45rem;
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label);
+    letter-spacing:0.16em; text-transform:uppercase; color:var(--label-ink);
+  }
+  .field .req{ color:var(--terra-deep); }
+  .field .opt{ color:var(--ink-3); font-family:'IBM Plex Sans', sans-serif; text-transform:none; letter-spacing:0; font-size:var(--fs-small); font-weight:400; }
+  .input{
+    width:100%; font:inherit; font-size:var(--fs-body); color:var(--ink);
+    padding:0.72rem 0.85rem; background:var(--recess); border:1px solid var(--sand); border-radius:var(--r-sm);
+    box-shadow:inset 0 1px 3px rgba(74,46,22,0.06);
+    transition:border-color 160ms var(--ease), box-shadow 160ms var(--ease), background 160ms var(--ease);
+  }
+  .input::placeholder{ color:var(--ink-3); }
+  .input:focus{ outline:none; border-color:var(--aloe-line); background:var(--plaster-hi); box-shadow:inset 0 1px 3px rgba(74,46,22,0.04), var(--focus); }
+  .field.invalid .input{ border-color:var(--terra); box-shadow:0 0 0 3px var(--terra-tint); }
+  .err{
+    display:none; margin-top:0.4rem; align-items:center; gap:0.35rem;
+    font-size:var(--fs-small); color:var(--terra-deep);
+  }
+  .field.invalid .err{ display:flex; }
+
+  .actor-row{ display:flex; gap:0.5rem; }
+  .actor-row .input{ flex:1 1 auto; }
+  .actor-add{
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:0.35rem;
+    font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label); letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--walnut-deep); background:var(--plaster-hi); border:1px solid var(--sand); border-radius:var(--r-sm);
+    padding:0 0.9rem; cursor:pointer; transition:background 160ms var(--ease), border-color 160ms var(--ease);
+  }
+  .actor-add svg{ width:14px; height:14px; }
+  .actor-add:hover{ background:var(--recess); border-color:var(--teak-soft); }
+  .actor-list{ list-style:none; margin:0.7rem 0 0; padding:0; display:flex; flex-direction:column; gap:0.4rem; }
+  .actor-list li{
+    display:flex; align-items:center; gap:0.65rem; padding:0.42rem 0.42rem 0.42rem 0.75rem;
+    background:var(--recess); border:1px solid var(--sand-soft); border-radius:var(--r-sm);
+    font-size:var(--fs-body); color:var(--ink); animation:settle 220ms var(--ease) both;
+  }
+  .actor-list .pos{ flex:0 0 auto; width:1.4em; font-family:'Jost', sans-serif; font-variant-numeric:tabular-nums; font-size:var(--fs-small); color:var(--label-ink); }
+  .actor-list .nm{ flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+  .actor-list .rm{
+    flex:0 0 auto; width:1.65rem; height:1.65rem; display:inline-flex; align-items:center; justify-content:center;
+    border:0; border-radius:var(--r-sm); background:transparent; color:var(--ink-3); cursor:pointer;
+    transition:color 150ms var(--ease), background 150ms var(--ease);
+  }
+  .actor-list .rm svg{ width:14px; height:14px; }
+  .actor-list .rm:hover{ color:var(--terra-deep); background:var(--terra-tint); }
+  .actor-empty{ margin:0.7rem 0 0; font-size:var(--fs-small); color:var(--ink-3); font-style:italic; }
+
+  .drawer-foot{
+    flex:0 0 auto; display:flex; gap:0.7rem; justify-content:flex-end; align-items:center;
+    padding:1.1rem clamp(1.2rem,3vw,1.7rem);
+    border-top:1px solid var(--sand);
+    background:linear-gradient(180deg, rgba(241,231,212,0), rgba(241,231,212,0.5));
+  }
+
+  /* ==================== CONFIRM DELETE DIALOG ==================== */
+  .confirm-scrim{
+    position:fixed; inset:0; z-index:60; display:grid; place-items:center; padding:1.2rem;
+    background:rgba(56,34,14,0.4); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+    opacity:0; visibility:hidden; transition:opacity 200ms var(--ease), visibility 200ms var(--ease);
+  }
+  .confirm-scrim.open{ opacity:1; visibility:visible; }
+  .confirm{
+    width:min(410px,100%); padding:1.6rem 1.6rem 1.35rem;
+    background:linear-gradient(180deg, var(--plaster-hi), var(--plaster));
+    border:1px solid var(--sand); border-top:3px solid var(--terra); border-radius:var(--r);
+    box-shadow:var(--sh-float), var(--hi-edge);
+    transform:translateY(8px) scale(0.98); opacity:0;
+    transition:transform 220ms var(--ease), opacity 220ms var(--ease);
+  }
+  .confirm-scrim.open .confirm{ transform:translateY(0) scale(1); opacity:1; }
+  .confirm .kicker{
+    margin:0 0 0.4rem; font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label);
+    letter-spacing:0.24em; text-transform:uppercase; color:var(--terra-deep);
+  }
+  .confirm h3{ margin:0 0 0.5rem; font-family:'Jost', sans-serif; font-weight:500; font-size:1.3rem; color:var(--ink); }
+  .confirm p{ margin:0; color:var(--ink-3); font-size:var(--fs-body); }
+  .confirm .target{
+    margin:0.7rem 0 0; padding:0.55rem 0.75rem; font-family:'Jost', sans-serif; font-size:var(--fs-body);
+    color:var(--ink); background:var(--recess); border-left:2px solid var(--teak); border-radius:0 var(--r-sm) var(--r-sm) 0;
+    overflow-wrap:anywhere;
+  }
+  .confirm-foot{ display:flex; gap:0.7rem; justify-content:flex-end; margin-top:1.3rem; }
+  .btn-danger{
+    color:var(--on-terra); background:linear-gradient(180deg, var(--terra), var(--terra-deep));
+    border-color:var(--terra-deep); box-shadow:0 10px 24px -14px rgba(140,63,34,0.7);
+  }
+  .btn-danger:hover{ filter:brightness(1.06); transform:translateY(-1px); }
+
+  /* ==================== TOAST ==================== */
+  .toast{
+    position:fixed; left:50%; bottom:1.6rem; z-index:70; transform:translate(-50%,20px);
+    display:inline-flex; align-items:center; gap:0.65rem; max-width:calc(100vw - 2rem);
+    padding:0.72rem 1.15rem; background:var(--steel); color:var(--plaster-hi);
+    border:1px solid rgba(255,255,255,0.1); border-radius:var(--r-sm); box-shadow:var(--sh-float);
+    font-size:var(--fs-body);
+    opacity:0; visibility:hidden;
+    transition:opacity 200ms var(--ease), transform 240ms var(--ease), visibility 200ms var(--ease);
+  }
+  .toast.show{ opacity:1; visibility:visible; transform:translate(-50%,0); }
+  .toast .tk{ color:var(--teak-soft); display:flex; flex:0 0 auto; }
+  .toast .tk svg{ width:17px; height:17px; }
+
+  /* ==================== FOOTER ==================== */
+  footer .foot-in{
+    display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    margin-top:2.6rem; padding-top:1.5rem; border-top:1px solid var(--hair);
+  }
+  footer .note{ font-size:var(--fs-small); color:var(--ink-3); max-width:56ch; }
+  .link-btn{
+    background:none; border:0; cursor:pointer; color:var(--label-ink);
+    font-family:'Jost', sans-serif; font-size:var(--fs-label); letter-spacing:0.1em; text-transform:uppercase;
+    text-decoration:underline; text-decoration-style:dotted; text-underline-offset:4px; padding:0.25rem;
+    transition:color 150ms var(--ease);
+  }
+  .link-btn:hover{ color:var(--ink); }
+
+  /* ==================== KEYFRAMES ==================== */
+  @keyframes rise{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+  @keyframes settle{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
+  @keyframes slideDown{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
+
+  /* ==================== RESPONSIVE — collapse to stacked bands (no h-scroll) ====================
+     Collapse at 940px: the 6-column elevation's min-content (~788px) plus shell
+     and plane padding needs headroom, so we switch to stacked labeled bands
+     well before the columns could crowd the viewport. */
+  @media (max-width:940px){
+    .thead{ display:none; }
+    .sort-mobile{
+      display:flex; align-items:center; gap:0; flex-wrap:nowrap; width:100%;
+      margin-top:0.2rem; border:1px solid var(--sand); border-radius:var(--r-sm); overflow:hidden;
+      background:var(--recess);
+    }
+    .sort-mobile .sm-lbl{
+      font-family:'Jost', sans-serif; font-size:var(--fs-label); letter-spacing:0.16em; text-transform:uppercase;
+      color:var(--label-ink); padding:0 0.6rem 0 0.8rem; white-space:nowrap;
+    }
+    .sortbtn{
+      flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;
+      font-family:'Jost', sans-serif; font-weight:500; font-size:var(--fs-label); letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--ink-2); background:transparent; border:0; border-left:1px solid var(--sand);
+      padding:0.6rem 0.5rem; cursor:pointer; transition:background 160ms var(--ease), color 160ms var(--ease);
+    }
+    .sortbtn:hover{ background:var(--sand-soft); color:var(--ink); }
+    .sortbtn[aria-pressed="true"]{ color:var(--walnut-deep); background:var(--aloe-tint); }
+    .sortbtn .arw{ width:11px; height:11px; opacity:0; transition:opacity 160ms var(--ease), transform 200ms var(--ease); color:var(--aloe-deep); }
+    .sortbtn[aria-pressed="true"] .arw{ opacity:1; }
+    .sortbtn[aria-pressed="true"][data-dir="asc"] .arw{ transform:rotate(180deg); }
+
+    .controls{ align-items:stretch; }
+    .search{ flex:1 1 100%; }
+    .add-btn{ margin-left:0; flex:1 1 100%; }
+
+    .brandrow{ align-items:flex-start; }
+    .stat{ padding-left:0; border-left:0; }
+
+    /* rows become stacked labeled bands (still floating planes) */
+    .entry{ display:block; padding:1.1rem 1.15rem; }
+    .cell{ display:flex; align-items:baseline; gap:0.75rem; padding:0.26rem 0; }
+    .cell + .cell{ padding-left:0; }
+    .cell-name{ display:block; padding-bottom:0.5rem; }
+    .cell-date{ padding-top:0; }
+    .cell-date .d-dm{ display:inline; font-size:var(--fs-body); }
+    .cell-date .d-yr{ display:inline; margin-left:0.4rem; }
+    .celllabel{
+      display:block; flex:0 0 auto; width:4.6rem; padding-top:0.05rem;
+      font-family:'Jost', sans-serif; font-size:var(--fs-label); letter-spacing:0.14em; text-transform:uppercase;
+      color:var(--label-ink);
+    }
+    .cell-actions{
+      justify-content:flex-start; gap:0.5rem; padding:0.75rem 0 0; margin-top:0.5rem;
+      border-top:1px solid var(--sand-soft);
+    }
+    .iconbtn{
+      width:auto; height:auto; padding:0.46rem 0.85rem; border-color:var(--sand); background:var(--recess);
+      font-family:'Jost', sans-serif; font-size:var(--fs-label); letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-2);
+    }
+    .iconbtn .btn-txt{ display:inline; }
+  }
+
+  @media (max-width:420px){
+    .celllabel{ width:4rem; }
+  }
+
+  /* ==================== MOTION — honor reduced-motion ==================== */
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:0.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:0.01ms !important; scroll-behavior:auto !important;
+    }
+    .brand, .stat, .controls{ opacity:1; }
+    .btn-primary:hover, .btn-danger:hover, .entry:hover{ transform:none; }
+    .drawer{ transition:none; }
+  }
+</style>
+</head>
+<body>
+  <!-- ==================== HEADER — window onto the garden ==================== -->
+  <header class="sky">
+    <div class="shell">
+      <div class="brandrow">
+        <div class="brand">
+          <p class="eyebrow">A private theatre archive</p>
+          <h1 class="wordmark">Instant <span class="thin">Re<span class="dot">&middot;</span>Play</span></h1>
+          <p class="tagline">A record of time well spent.</p>
+        </div>
+        <div class="stat" aria-live="polite">
+          <span class="stat-num" id="statNum">0</span>
+          <span class="stat-cap" id="statCap">plays logged</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell">
+      <!-- ==================== CONTROL BAR (cantilevered plane) ==================== -->
+      <div class="controls">
+        <div class="search" id="searchWrap">
+          <span class="ico" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          </span>
+          <label for="searchInput" class="visually-hidden">Search your log by title, venue, director, or actor</label>
+          <input id="searchInput" type="text" autocomplete="off" spellcheck="false" placeholder="Search titles, venues, directors, actors&hellip;" />
+          <button type="button" class="clear-x" id="searchClear" aria-label="Clear search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-lg add-btn" id="addBtn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          Log<span class="add-full">&nbsp;a play</span>
+        </button>
+      </div>
+
+      <!-- ==================== ACTIVE FILTER BANNER ==================== -->
+      <div class="filterbar" id="filterBar" role="status" aria-live="polite">
+        <span class="fb-ico" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"></path></svg>
+        </span>
+        <span class="fb-text" id="filterText"></span>
+        <button type="button" class="fb-clear" id="clearFilter">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+          Clear filter
+        </button>
+      </div>
+
+      <!-- ==================== THE LOG ==================== -->
+      <section class="listwrap" aria-label="Logged plays">
+        <!-- mobile: sort segment (same state as the desktop column headers) -->
+        <div class="sort-mobile" role="group" aria-label="Sort the log">
+          <span class="sm-lbl" aria-hidden="true">Sort</span>
+          <button type="button" class="sortbtn" data-sort="date" aria-pressed="true" data-dir="desc">Date <span class="arw" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></span></button>
+          <button type="button" class="sortbtn" data-sort="name" aria-pressed="false" data-dir="asc">Title <span class="arw" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></span></button>
+          <button type="button" class="sortbtn" data-sort="venue" aria-pressed="false" data-dir="asc">Venue <span class="arw" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></span></button>
+        </div>
+
+        <!-- the log as an ARIA table: sortable column headers (aria-sort) over
+             a rowgroup of floating plaster planes -->
+        <div class="logtable" role="table" aria-label="Logged plays" id="logTable">
+          <!-- desktop: sortable column headers -->
+          <div class="thead" role="row" id="thead">
+            <div class="th" role="columnheader" aria-sort="descending">
+              <button type="button" data-sort="date">Seen <span class="arw" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></span></button>
+            </div>
+            <div class="th" role="columnheader">
+              <button type="button" data-sort="name">Production <span class="arw" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></span></button>
+            </div>
+            <div class="th" role="columnheader">
+              <button type="button" data-sort="venue">Venue <span class="arw" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></span></button>
+            </div>
+            <div class="th" role="columnheader">Director</div>
+            <div class="th" role="columnheader">Cast</div>
+            <div class="th th-actions" role="columnheader"><span class="visually-hidden">Entry actions</span></div>
+          </div>
+
+          <ul class="ledger" id="ledger" role="rowgroup"></ul>
+        </div>
+
+        <!-- empty-log state -->
+        <div class="state" id="emptyState">
+          <span class="glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"></path><path d="M12 20V10"></path><path d="M12 10c0-3 2-5 5-5 0 3-2 5-5 5Z"></path><path d="M12 13C12 9 9 6 5 6c0 4 3 7 7 7Z"></path></svg>
+          </span>
+          <h2>Your archive is open</h2>
+          <p>No plays logged yet. The first one you add settles in here &mdash; the beginning of a record you can trust for years.</p>
+          <button type="button" class="btn btn-primary btn-lg" id="emptyAdd">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            Log your first play
+          </button>
+        </div>
+
+        <!-- no-results state (distinct from empty) -->
+        <div class="state" id="noResults">
+          <span class="glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3M8.5 11h5"></path></svg>
+          </span>
+          <h2>Nothing in the archive matches</h2>
+          <p id="noResultsMsg">No plays match the current search and filter. Your other entries are still here.</p>
+          <button type="button" class="btn btn-ghost btn-md" id="clearAll">Clear search &amp; filter</button>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="shell">
+        <div class="foot-in">
+          <p class="note">Your archive lives in this browser &mdash; nothing is shared. Names link to an IMDb <em>search</em>, never a guessed page, so a link is never wrong.</p>
+          <!-- Demo scaffolding: a non-destructive way to preview the empty
+               archive for review. Not shipping UI — remove for the real build. -->
+          <button type="button" class="link-btn" id="previewEmpty">Preview the empty archive</button>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ==================== DRAWER: add / edit ==================== -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true">
+    <div class="drawer-head">
+      <p class="kicker" id="drawerKicker">New entry</p>
+      <h2 id="drawerTitle">Log a play</h2>
+      <button type="button" class="drawer-close" id="drawerClose" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <form class="drawer-body" id="playForm" novalidate>
+      <div class="field" id="fNameField">
+        <label for="fName">Play name <span class="req" aria-hidden="true">&mdash; required</span></label>
+        <input class="input" id="fName" name="name" type="text" autocomplete="off" spellcheck="false" aria-required="true" aria-describedby="errName" placeholder="e.g. A Streetcar Named Desire" />
+        <span class="err" id="errName" role="alert">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4M12 16h.01"></path></svg>
+          A play needs a name before it can be saved.
+        </span>
+      </div>
+
+      <div class="field" id="fDateField">
+        <label for="fDate">Date seen <span class="opt">optional</span></label>
+        <input class="input" id="fDate" name="date" type="date" aria-describedby="errDate" />
+        <span class="err" id="errDate" role="alert">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4M12 16h.01"></path></svg>
+          Please enter a valid calendar date (past or future is fine).
+        </span>
+      </div>
+
+      <div class="field">
+        <label for="fVenue">Venue <span class="opt">optional</span></label>
+        <input class="input" id="fVenue" name="venue" type="text" autocomplete="off" placeholder="e.g. Almeida Theatre" />
+      </div>
+
+      <div class="field">
+        <label for="fDirector">Director <span class="opt">optional</span></label>
+        <input class="input" id="fDirector" name="director" type="text" autocomplete="off" placeholder="e.g. Rebecca Frecknall" />
+      </div>
+
+      <div class="field">
+        <span class="lab" id="castLabel">Cast <span class="opt">optional &middot; add one at a time, order kept</span></span>
+        <div class="actor-row">
+          <label for="fActor" class="visually-hidden">Add an actor</label>
+          <input class="input" id="fActor" type="text" autocomplete="off" placeholder="Actor name, then Add" aria-describedby="castLabel" />
+          <button type="button" class="actor-add" id="actorAdd">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            Add
+          </button>
+        </div>
+        <ul class="actor-list" id="actorList" aria-label="Cast added so far"></ul>
+        <p class="actor-empty" id="actorEmpty">No cast added yet.</p>
+      </div>
+    </form>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-ghost btn-md" id="drawerCancel">Cancel</button>
+      <button type="submit" class="btn btn-primary btn-md" id="drawerSave" form="playForm">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        <span id="saveLabel">Save to log</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== CONFIRM DELETE ==================== -->
+  <div class="confirm-scrim" id="confirmScrim">
+    <div class="confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmDesc">
+      <p class="kicker">Delete entry</p>
+      <h3 id="confirmTitle">Delete this play?</h3>
+      <p id="confirmDesc">This removes the production from your archive permanently. This can&rsquo;t be undone.</p>
+      <p class="target" id="confirmTarget"></p>
+      <div class="confirm-foot">
+        <button type="button" class="btn btn-ghost btn-md" id="confirmCancel">Keep it</button>
+        <button type="button" class="btn btn-danger btn-md" id="confirmDelete">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST ==================== -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="tk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+    <span id="toastMsg"></span>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- lucide-style icon markup ---------- */
+  var ICON = {
+    imdb:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg>',
+    edit:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M10 11v6M14 11v6"></path></svg>',
+    rm:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>'
+  };
+
+  var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var STORE_KEY = "instant-replay.play-log.v1";
+
+  /* ---------- realistic seed data (London West End; edge cases included) ---------- */
+  var SEED = [
+    { name:"Waiting for Godot",              date:"2026-09-16", venue:"Theatre Royal Haymarket",       director:"James Macdonald",     actors:["Ben Whishaw","Lucian Msamati"] },
+    { name:"An Enemy of the People",         date:"2024-02-20", venue:"Duke of York's Theatre",         director:"Thomas Ostermeier",   actors:["Matt Smith"] },
+    { name:"Long Day's Journey Into Night",  date:"2024-03-27", venue:"Wyndham's Theatre",              director:"Jeremy Herrin",       actors:["Brian Cox"] },
+    { name:"A Streetcar Named Desire",       date:"2024-01-12", venue:"Almeida Theatre",                director:"Rebecca Frecknall",   actors:["Paul Mescal","Patsy Ferran","Anjana Vasan"] },
+    { name:"Vanya",                          date:"2024-01-13", venue:"Duke of York's Theatre",         director:"Sam Yates",           actors:["Andrew Scott"] },
+    { name:"The Pillowman",                  date:"2023-08-30", venue:"Duke of York's Theatre",         director:"",                    actors:["David Tennant","Lily Allen"] },
+    { name:"Sunset Boulevard",               date:"2023-10-07", venue:"Savoy Theatre",                  director:"Jamie Lloyd",         actors:["Nicole Scherzinger","Tom Francis"] },
+    { name:"The Motive and the Cue",         date:"2023-05-04", venue:"Noël Coward Theatre",       director:"Sam Mendes",          actors:["Mark Gatiss","Johnny Flynn"] },
+    { name:"Oklahoma!",                      date:"2023-03-02", venue:"Wyndham's Theatre",              director:"Daniel Fish",         actors:[] },
+    { name:"Cabaret",                        date:"2022-12-15", venue:"Kit Kat Club, Playhouse Theatre",director:"Rebecca Frecknall",   actors:["Eddie Redmayne","Jessie Buckley"] },
+    { name:"Prima Facie",                    date:"2022-05-10", venue:"Harold Pinter Theatre",          director:"Justin Martin",       actors:["Jodie Comer"] },
+    { name:"The Lehman Trilogy",             date:"2019-07-18", venue:"Gillian Lynne Theatre",          director:"Sam Mendes",          actors:["Simon Russell Beale","Adam Godley","Ben Miles"] },
+    { name:"The Hills of California",         date:"",           venue:"Harold Pinter Theatre",          director:"Sam Mendes",          actors:["Laura Donnelly"] },
+    { name:"A Midsummer Night's Dream",      date:"",           venue:"",                               director:"",                    actors:[] }
+  ];
+
+  /* ---------- state ---------- */
+  var plays = load();
+  var sort = { field:"date", dir:"desc" };
+  var search = "";
+  var filter = null;          /* { type:'venue'|'director'|'actor', value } */
+  var editingId = null;
+  var pendingDelete = null;
+  var draftActors = [];
+  var lastTouchedId = null;
+  var previewEmpty = false;   /* demo scaffolding only */
+  var lastFocused = null;
+  var toastTimer = null;
+
+  /* ---------- persistence ---------- */
+  function uid(){ return "p-" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function normalize(p){
+    return {
+      id: p.id || uid(),
+      name: String(p.name || "").trim(),
+      date: String(p.date || "").trim(),
+      venue: String(p.venue || "").trim(),
+      director: String(p.director || "").trim(),
+      actors: Array.isArray(p.actors) ? p.actors.map(function(a){ return String(a||"").trim(); }).filter(Boolean) : []
+    };
+  }
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(raw){ var p = JSON.parse(raw); if(Array.isArray(p)) return p.map(normalize); }
+    }catch(e){ /* fall through to seed */ }
+    return SEED.map(function(p,i){ return normalize(Object.assign({ id:"seed-"+i }, p)); });
+  }
+  function persist(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(plays)); }catch(e){} }
+
+  /* ---------- helpers ---------- */
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]; }); }
+  function imdbUrl(name){ return "https://www.imdb.com/find/?q=" + encodeURIComponent(name) + "&s=nm"; }
+  function fmtDate(iso){
+    if(!iso) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if(!m) return null;
+    var d = new Date(iso + "T00:00:00");
+    if(isNaN(d.getTime())) return null;
+    return { day: parseInt(m[3],10), mon: MONTHS[parseInt(m[2],10)-1] || "", year: m[1] };
+  }
+  /* FR-04/QA-04: accept only a genuine calendar date; any past/future date ok */
+  function isValidDate(v){
+    if(!v) return true;   /* optional */
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    if(!m) return false;
+    var d = new Date(v + "T00:00:00");
+    return !isNaN(d.getTime()) &&
+           d.getFullYear() === parseInt(m[1],10) &&
+           (d.getMonth()+1) === parseInt(m[2],10) &&
+           d.getDate() === parseInt(m[3],10);
+  }
+  function isFuture(iso){
+    if(!iso) return false;
+    var t = new Date(); t.setHours(0,0,0,0);
+    var d = new Date(iso + "T00:00:00");
+    return !isNaN(d.getTime()) && d.getTime() > t.getTime();
+  }
+
+  /* ---------- derive the visible list ---------- */
+  function matchesFilter(p){
+    if(!filter) return true;
+    if(filter.type==="venue") return p.venue === filter.value;
+    if(filter.type==="director") return p.director === filter.value;
+    if(filter.type==="actor") return p.actors.indexOf(filter.value) !== -1;
+    return true;
+  }
+  function matchesSearch(p){
+    if(!search) return true;
+    var q = search.toLowerCase();
+    if(p.name.toLowerCase().indexOf(q)!==-1) return true;
+    if(p.venue.toLowerCase().indexOf(q)!==-1) return true;
+    if(p.director.toLowerCase().indexOf(q)!==-1) return true;
+    return p.actors.some(function(a){ return a.toLowerCase().indexOf(q)!==-1; });
+  }
+  function comparator(a,b){
+    var dir = sort.dir==="asc" ? 1 : -1, av, bv;
+    if(sort.field==="date"){ av=a.date; bv=b.date; }
+    else if(sort.field==="name"){ av=a.name; bv=b.name; }
+    else { av=a.venue; bv=b.venue; }
+    var ae = !av, be = !bv;
+    if(ae && be) return 0;
+    if(ae) return 1;   /* blanks always last, both directions (FR-11) */
+    if(be) return -1;
+    if(sort.field==="date") return av < bv ? -1*dir : av > bv ? 1*dir : 0;
+    return av.localeCompare(bv, "en", { sensitivity:"base" }) * dir;
+  }
+
+  /* ---------- render ---------- */
+  var ledgerEl = document.getElementById("ledger");
+  var emptyEl  = document.getElementById("emptyState");
+  var noResEl  = document.getElementById("noResults");
+  var theadEl  = document.getElementById("thead");
+  var logTable = document.getElementById("logTable");
+  var sortMobileEl = document.querySelector(".sort-mobile");
+
+  function isActive(type, value){ return filter && filter.type===type && filter.value===value; }
+
+  function personHTML(type, name){
+    var active = isActive(type, name) ? " is-active" : "";
+    return '<span class="person">' +
+      '<button type="button" class="fval' + active + '" data-ftype="' + type + '" data-fval="' + esc(name) + '">' + esc(name) + '</button>' +
+      '<a class="imdb" href="' + esc(imdbUrl(name)) + '" target="_blank" rel="noopener noreferrer" ' +
+        'aria-label="Search IMDb for ' + esc(name) + ' (opens in a new tab)" title="Search IMDb for ' + esc(name) + '">' + ICON.imdb + '</a>' +
+      '</span>';
+  }
+
+  function rowHTML(p){
+    var d = fmtDate(p.date);
+    var dateInner = d
+      ? '<span class="d-dm">' + d.day + ' ' + d.mon + '</span><span class="d-yr">' + d.year + '</span>'
+      : '<span class="d-none">Undated</span>';
+
+    var future = isFuture(p.date) ? '<span class="future-tag">Upcoming</span>' : '';
+
+    /* blank optional fields are OMITTED entirely — no placeholder that could
+       read as data (FR-03); the label only appears when a value exists. */
+    var venueCell = p.venue
+      ? '<span class="celllabel">Venue</span><span class="valwrap"><button type="button" class="fval venue' + (isActive("venue",p.venue)?" is-active":"") + '" data-ftype="venue" data-fval="' + esc(p.venue) + '">' + esc(p.venue) + '</button></span>'
+      : '';
+    var dirCell = p.director
+      ? '<span class="celllabel">Director</span><span class="valwrap">' + personHTML("director", p.director) + '</span>'
+      : '';
+    var castCell = p.actors.length
+      ? '<span class="celllabel">Cast</span><span class="valwrap cast-line">' + p.actors.map(function(a){ return personHTML("actor", a); }).join('<span class="cast-sep" aria-hidden="true">, </span>') + '</span>'
+      : '';
+
+    return '<li class="entry' + (p.id===lastTouchedId ? " settling" : "") + '" data-id="' + esc(p.id) + '" role="row">' +
+      '<div class="cell cell-date" role="cell"><span class="celllabel">Seen</span>' + dateInner + '</div>' +
+      '<div class="cell cell-name" role="rowheader"><h3 class="playname">' + esc(p.name) + '</h3>' + future + '</div>' +
+      '<div class="cell cell-venue" role="cell">' + venueCell + '</div>' +
+      '<div class="cell cell-dir" role="cell">' + dirCell + '</div>' +
+      '<div class="cell cell-cast" role="cell">' + castCell + '</div>' +
+      '<div class="cell cell-actions" role="cell">' +
+        '<button type="button" class="iconbtn" data-act="edit" data-id="' + esc(p.id) + '" aria-label="Edit ' + esc(p.name) + '">' + ICON.edit + '<span class="btn-txt">Edit</span></button>' +
+        '<button type="button" class="iconbtn danger" data-act="delete" data-id="' + esc(p.id) + '" aria-label="Delete ' + esc(p.name) + '">' + ICON.trash + '<span class="btn-txt">Delete</span></button>' +
+      '</div>' +
+    '</li>';
+  }
+
+  function updateStat(){
+    var total = plays.length;
+    document.getElementById("statNum").textContent = total;
+    var years = plays.map(function(p){ return p.date ? parseInt(p.date.slice(0,4),10) : null; }).filter(Boolean);
+    var since = years.length ? Math.min.apply(null, years) : null;
+    var word = total===1 ? "play logged" : "plays logged";
+    document.getElementById("statCap").innerHTML = word + (since ? "<br>since " + since : "");
+  }
+
+  function updateSortUI(){
+    /* desktop column headers (aria-sort) */
+    var ths = theadEl.querySelectorAll('.th');
+    ths.forEach(function(th){
+      var btn = th.querySelector('button[data-sort]');
+      if(!btn){ return; }
+      if(btn.getAttribute("data-sort")===sort.field){
+        th.setAttribute("aria-sort", sort.dir==="asc" ? "ascending" : "descending");
+      } else {
+        th.removeAttribute("aria-sort");
+      }
+    });
+    /* mobile segment (aria-pressed + arrow direction) */
+    sortMobileEl.querySelectorAll(".sortbtn").forEach(function(b){
+      var active = b.getAttribute("data-sort")===sort.field;
+      b.setAttribute("aria-pressed", active ? "true" : "false");
+      b.setAttribute("data-dir", active ? sort.dir : (b.getAttribute("data-sort")==="date" ? "desc" : "asc"));
+    });
+  }
+
+  function updateFilterBar(){
+    var bar = document.getElementById("filterBar");
+    if(!filter){ bar.classList.remove("open"); return; }
+    var map = { venue:"Showing plays at", director:"Directed by", actor:"Featuring" };
+    document.getElementById("filterText").innerHTML =
+      '<span class="fb-lbl">' + map[filter.type] + '</span><strong>' + esc(filter.value) + '</strong>';
+    bar.classList.add("open");
+  }
+
+  function updateNoResultsMsg(){
+    var parts = [];
+    if(search) parts.push('the search &ldquo;' + esc(search) + '&rdquo;');
+    if(filter) parts.push('this filter');
+    var msg = parts.length
+      ? "No plays match " + parts.join(" and ") + ". Your other entries are still here &mdash; clear to see them."
+      : "No plays match.";
+    document.getElementById("noResultsMsg").innerHTML = msg;
+  }
+
+  function render(){
+    updateStat();
+    updateSortUI();
+    updateFilterBar();
+    document.getElementById("searchWrap").classList.toggle("has-value", search.length>0);
+
+    emptyEl.classList.remove("show");
+    noResEl.classList.remove("show");
+
+    var source = previewEmpty ? [] : plays;
+
+    if(source.length===0){
+      ledgerEl.innerHTML = "";
+      logTable.style.display = "none";
+      sortMobileEl.style.display = "none";
+      emptyEl.classList.add("show");
+      return;
+    }
+
+    var view = source.filter(function(p){ return matchesFilter(p) && matchesSearch(p); });
+    view.sort(comparator);
+
+    if(view.length===0){
+      ledgerEl.innerHTML = "";
+      logTable.style.display = "none";
+      sortMobileEl.style.display = "none";
+      updateNoResultsMsg();
+      noResEl.classList.add("show");
+      return;
+    }
+
+    logTable.style.display = "";
+    sortMobileEl.style.display = "";
+    ledgerEl.innerHTML = view.map(rowHTML).join("");
+    lastTouchedId = null;
+  }
+
+  /* ---------- search ---------- */
+  var searchInput = document.getElementById("searchInput");
+  searchInput.addEventListener("input", function(){
+    search = searchInput.value.trim();
+    render();
+  });
+  document.getElementById("searchClear").addEventListener("click", function(){
+    searchInput.value=""; search=""; searchInput.focus(); render();
+  });
+
+  /* ---------- sort (delegated across headers + mobile segment) ---------- */
+  document.addEventListener("click", function(e){
+    var sb = e.target.closest("[data-sort]");
+    if(!sb) return;
+    var f = sb.getAttribute("data-sort");
+    if(sort.field===f){ sort.dir = sort.dir==="asc" ? "desc" : "asc"; }
+    else { sort.field = f; sort.dir = f==="date" ? "desc" : "asc"; }
+    render();
+  });
+
+  /* ---------- click-to-filter + row actions (delegated) ---------- */
+  ledgerEl.addEventListener("click", function(e){
+    var fv = e.target.closest(".fval");
+    if(fv){
+      var type = fv.getAttribute("data-ftype"), value = fv.getAttribute("data-fval");
+      /* click the already-active value to toggle the filter off */
+      if(filter && filter.type===type && filter.value===value){ filter = null; }
+      else { filter = { type:type, value:value }; }
+      previewEmpty = false;
+      render();
+      if(filter) scrollToFilterBar();
+      return;
+    }
+    var act = e.target.closest("[data-act]");
+    if(act){
+      var id = act.getAttribute("data-id");
+      if(act.getAttribute("data-act")==="edit") openDrawer(id);
+      else askDelete(id);
+    }
+    /* IMDb <a> links navigate natively — a filter click never opens IMDb, and
+       an IMDb click never filters (separate elements, separate hit areas). */
+  });
+  function scrollToFilterBar(){
+    document.getElementById("filterBar").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block:"nearest" });
+  }
+
+  document.getElementById("clearFilter").addEventListener("click", function(){ filter=null; render(); });
+  document.getElementById("clearAll").addEventListener("click", clearSearchAndFilter);
+  function clearSearchAndFilter(){ filter=null; search=""; searchInput.value=""; render(); }
+
+  /* ---------- drawer (add / edit) ---------- */
+  var scrim = document.getElementById("scrim");
+  var drawer = document.getElementById("drawer");
+  var form = document.getElementById("playForm");
+  var fName = document.getElementById("fName");
+  var fDate = document.getElementById("fDate");
+  var fVenue = document.getElementById("fVenue");
+  var fDirector = document.getElementById("fDirector");
+  var fActor = document.getElementById("fActor");
+  var fNameField = document.getElementById("fNameField");
+  var fDateField = document.getElementById("fDateField");
+
+  function clearFormErrors(){
+    fNameField.classList.remove("invalid"); fName.removeAttribute("aria-invalid");
+    fDateField.classList.remove("invalid"); fDate.removeAttribute("aria-invalid");
+  }
+
+  function openDrawer(id){
+    previewEmpty = false;           /* never leave the demo preview desynced */
+    editingId = id || null;
+    lastFocused = document.activeElement;
+    clearFormErrors();
+    form.reset();
+    if(id){
+      var p = plays.find(function(x){ return x.id===id; });
+      if(!p) return;
+      document.getElementById("drawerKicker").textContent = "Editing entry";
+      document.getElementById("drawerTitle").textContent = "Edit play";
+      document.getElementById("saveLabel").textContent = "Save changes";
+      fName.value=p.name; fDate.value=p.date; fVenue.value=p.venue; fDirector.value=p.director;
+      draftActors = p.actors.slice();
+    } else {
+      document.getElementById("drawerKicker").textContent = "New entry";
+      document.getElementById("drawerTitle").textContent = "Log a play";
+      document.getElementById("saveLabel").textContent = "Save to log";
+      draftActors = [];
+    }
+    renderDraftActors();
+    scrim.classList.add("open");
+    drawer.classList.add("open");
+    drawer.setAttribute("aria-hidden","false");
+    document.body.style.overflow="hidden";
+    window.setTimeout(function(){ fName.focus(); }, REDUCED ? 0 : 70);
+  }
+  function closeDrawer(){
+    scrim.classList.remove("open");
+    drawer.classList.remove("open");
+    drawer.setAttribute("aria-hidden","true");
+    document.body.style.overflow="";
+    editingId = null;
+    if(lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+  document.getElementById("addBtn").addEventListener("click", function(){ openDrawer(null); });
+  document.getElementById("emptyAdd").addEventListener("click", function(){ openDrawer(null); });
+  document.getElementById("drawerClose").addEventListener("click", closeDrawer);
+  document.getElementById("drawerCancel").addEventListener("click", closeDrawer);
+  scrim.addEventListener("click", closeDrawer);
+
+  /* ---------- actor sub-form ---------- */
+  function renderDraftActors(){
+    var list = document.getElementById("actorList");
+    var empty = document.getElementById("actorEmpty");
+    if(draftActors.length===0){ list.innerHTML=""; empty.style.display="block"; return; }
+    empty.style.display="none";
+    list.innerHTML = draftActors.map(function(a,i){
+      return '<li><span class="pos" aria-hidden="true">' + (i+1) + '</span><span class="nm">' + esc(a) + '</span>' +
+        '<button type="button" class="rm" data-i="' + i + '" aria-label="Remove ' + esc(a) + '">' + ICON.rm + '</button></li>';
+    }).join("");
+  }
+  function addActor(){
+    var v = fActor.value.trim();
+    if(!v){ fActor.focus(); return; }
+    if(draftActors.indexOf(v)===-1){ draftActors.push(v); }  /* trim + exact per-entry dedupe + order kept */
+    fActor.value=""; renderDraftActors(); fActor.focus();
+  }
+  document.getElementById("actorAdd").addEventListener("click", addActor);
+  fActor.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addActor(); } });
+  document.getElementById("actorList").addEventListener("click", function(e){
+    var rm = e.target.closest("[data-i]");
+    if(!rm) return;
+    draftActors.splice(parseInt(rm.getAttribute("data-i"),10), 1);
+    renderDraftActors();
+  });
+
+  /* ---------- save (validate name + date; normalize) ---------- */
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    clearFormErrors();
+
+    /* fold a typed-but-not-added actor into the list on save */
+    if(fActor.value.trim()) addActor();
+
+    var name = fName.value.trim();
+    var date = fDate.value.trim();
+    var ok = true;
+
+    if(!name){ fNameField.classList.add("invalid"); fName.setAttribute("aria-invalid","true"); fName.focus(); ok=false; }
+    if(!isValidDate(date)){ fDateField.classList.add("invalid"); fDate.setAttribute("aria-invalid","true"); if(ok) fDate.focus(); ok=false; }
+    if(!ok) return;   /* nothing saved; all other entered values preserved */
+
+    var cleanActors = [];
+    draftActors.forEach(function(a){ var t=a.trim(); if(t && cleanActors.indexOf(t)===-1) cleanActors.push(t); });
+
+    var record = {
+      name: name,
+      date: date,
+      venue: fVenue.value.trim(),
+      director: fDirector.value.trim(),
+      actors: cleanActors
+    };
+
+    var wasEdit = !!editingId, msg;
+    if(editingId){
+      var p = plays.find(function(x){ return x.id===editingId; });
+      record.id = editingId;
+      Object.assign(p, record);
+      lastTouchedId = editingId;
+      msg = "Updated — “" + name + "” is saved.";
+    } else {
+      record.id = uid();
+      plays.push(record);
+      lastTouchedId = record.id;
+      /* surface the new entry: default newest-first sort, no active filter/search */
+      sort = { field:"date", dir:"desc" };
+      filter = null; search = ""; searchInput.value = "";
+      msg = "Saved — “" + name + "” is in your archive.";
+    }
+    previewEmpty = false;
+    persist();
+    closeDrawer();
+    render();
+    toast(msg);
+    if(!wasEdit && !REDUCED){
+      var row = ledgerEl.querySelector('[data-id="' + (window.CSS && CSS.escape ? CSS.escape(record.id) : record.id) + '"]');
+      if(row) row.classList.add("settling");
+    }
+  });
+
+  /* ---------- delete confirm ---------- */
+  var confirmScrim = document.getElementById("confirmScrim");
+  function askDelete(id){
+    var p = plays.find(function(x){ return x.id===id; });
+    if(!p) return;
+    pendingDelete = id;
+    lastFocused = document.activeElement;
+    document.getElementById("confirmTarget").textContent = p.name + (p.venue ? "  ·  " + p.venue : "");
+    confirmScrim.classList.add("open");
+    window.setTimeout(function(){ document.getElementById("confirmCancel").focus(); }, REDUCED ? 0 : 60);
+  }
+  function closeConfirm(){
+    confirmScrim.classList.remove("open");
+    pendingDelete = null;
+    if(lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+  document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
+  confirmScrim.addEventListener("click", function(e){ if(e.target===confirmScrim) closeConfirm(); });
+  document.getElementById("confirmDelete").addEventListener("click", function(){
+    if(!pendingDelete){ closeConfirm(); return; }
+    var p = plays.find(function(x){ return x.id===pendingDelete; });
+    var id = pendingDelete;
+    closeConfirm();
+    var row = ledgerEl.querySelector('[data-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+    function finish(){
+      plays = plays.filter(function(x){ return x.id!==id; });
+      persist();
+      render();
+      toast((p ? "“"+p.name+"”" : "Entry") + " deleted.");
+    }
+    if(row && !REDUCED){ row.classList.add("removing"); window.setTimeout(finish, 200); }
+    else finish();
+  });
+
+  /* ---------- toast ---------- */
+  var toastEl = document.getElementById("toast");
+  function toast(msg){
+    document.getElementById("toastMsg").textContent = msg;
+    toastEl.classList.add("show");
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 2600);
+  }
+
+  /* ---------- keyboard: Escape closes overlays; Tab is trapped inside them ---------- */
+  document.addEventListener("keydown", function(e){
+    if(e.key==="Escape"){
+      if(confirmScrim.classList.contains("open")){ closeConfirm(); return; }
+      if(drawer.classList.contains("open")){ closeDrawer(); return; }
+    }
+    if(e.key==="Tab"){
+      if(confirmScrim.classList.contains("open")){ trapFocus(e, confirmScrim); }
+      else if(drawer.classList.contains("open")){ trapFocus(e, drawer); }
+    }
+  });
+  function trapFocus(ev, container){
+    var nodes = container.querySelectorAll('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    var vis = [];
+    for(var i=0;i<nodes.length;i++){ if(nodes[i].offsetParent !== null) vis.push(nodes[i]); }
+    if(!vis.length) return;
+    var first = vis[0], last = vis[vis.length-1];
+    if(ev.shiftKey && document.activeElement===first){ ev.preventDefault(); last.focus(); }
+    else if(!ev.shiftKey && document.activeElement===last){ ev.preventDefault(); first.focus(); }
+  }
+
+  /* ---------- demo scaffolding: preview the empty archive (non-destructive) ---------- */
+  var previewBtn = document.getElementById("previewEmpty");
+  previewBtn.addEventListener("click", function(){
+    previewEmpty = !previewEmpty;
+    previewBtn.textContent = previewEmpty ? "Back to my archive" : "Preview the empty archive";
+    /* clear search/filter state without rendering, then render once */
+    if(previewEmpty){ filter=null; search=""; searchInput.value=""; }
+    render();
+  });
+
+  /* ---------- go ---------- */
+  render();
+})();
+</script>
+</body>
+</html>

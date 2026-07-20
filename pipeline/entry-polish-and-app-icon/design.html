@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Instant Re-Play · Design refinement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+  /* Instant Re-Play — Neutra Biorealism system (reused verbatim from the shipped app). */
+  :root{
+    --plaster:#F8F1E3; --plaster-hi:#FDF8EE; --plaster-top:#FFFCF5; --recess:#F1E7D4; --recess-soft:#EFE6D2;
+    --ground-1:#F3EAD8; --ground-2:#EFE6D2; --ground-3:#E9DAC0; --ground-4:#E3D2B4;
+    --ink:#2B261E; --ink-2:#4A4234; --ink-3:#6B5D46; --ink-faint:#8A7A5E; --label-ink:#574123;
+    --walnut:#7A5233; --walnut-deep:#4B2F19; --teak:#9A6738; --teak-soft:#C0A176;
+    --aloe:#3B6B4C; --aloe-hi:#47795A; --aloe-deep:#2F5A3F; --on-aloe:#FDF8EE;
+    --terra:#A5502F; --terra-deep:#8C3F22;
+    --sand:#E0D5C0; --sand-soft:#EADFCA; --hair:#D8C5A2; --steel:#38332B; --sky:#C7DAD8; --sky-soft:#DCE7E1;
+    --sh-plane:0 20px 40px -24px rgba(74,46,22,0.30), 0 3px 9px -5px rgba(74,46,22,0.15);
+    --sh-lift:0 30px 56px -26px rgba(74,46,22,0.36), 0 5px 13px -6px rgba(74,46,22,0.18);
+    --sh-float:0 44px 90px -34px rgba(56,34,14,0.46), 0 10px 26px -12px rgba(56,34,14,0.26);
+    --hi-edge:inset 0 1px 0 rgba(255,251,243,0.75);
+    --ease:cubic-bezier(0.22,0.61,0.36,1); --focus:0 0 0 3px rgba(59,107,76,0.34);
+    --r:10px; --r-sm:4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    font-family:'IBM Plex Sans',sans-serif; color:var(--ink); line-height:1.5;
+    min-height:100vh; -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(120% 80% at 50% -8%, rgba(255,252,245,0.9), rgba(255,252,245,0) 60%),
+      radial-gradient(90% 60% at 78% 8%, rgba(199,218,216,0.35), rgba(199,218,216,0) 55%),
+      radial-gradient(70% 50% at 12% 92%, rgba(59,107,76,0.10), rgba(59,107,76,0) 60%),
+      linear-gradient(168deg, var(--ground-1), var(--ground-2) 34%, var(--ground-3) 70%, var(--ground-4));
+    background-attachment:fixed;
+  }
+  body::after{content:"";position:fixed;left:0;right:0;top:38%;height:1px;background:linear-gradient(90deg,transparent,rgba(120,90,50,0.22),transparent);pointer-events:none;}
+  .shell{max-width:1060px;margin:0 auto;padding:clamp(1.5rem,4vw,3.2rem) clamp(1.1rem,4vw,2rem) 4rem;}
+
+  .masthead{margin-bottom:2.4rem;}
+  .eyebrow{font-family:'Jost',sans-serif;font-weight:500;font-size:12px;letter-spacing:0.34em;text-transform:uppercase;color:var(--label-ink);margin:0 0 0.6rem;}
+  h1.title{font-family:'Jost',sans-serif;font-weight:400;font-size:clamp(1.7rem,4vw,2.5rem);letter-spacing:0.01em;color:var(--ink);margin:0;line-height:1.05;}
+  .title .dot{color:var(--aloe);}
+  .sub{max-width:60ch;color:var(--ink-2);font-size:17px;margin:0.7rem 0 0;}
+
+  .sec{margin-top:2.9rem;}
+  .sec-head{font-family:'Jost',sans-serif;font-weight:500;font-size:12px;letter-spacing:0.28em;text-transform:uppercase;color:var(--label-ink);margin:0 0 0.9rem;display:flex;align-items:center;gap:0.7rem;}
+  .sec-head::before{content:"";width:22px;height:1px;background:var(--teak);}
+  .sec-note{color:var(--ink-3);font-size:14px;margin:0 0 1.1rem;max-width:64ch;}
+
+  /* floating plaster plane */
+  .plane{
+    background:linear-gradient(180deg,var(--plaster-hi),var(--plaster) 70%,var(--recess));
+    border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--sh-plane),var(--hi-edge);
+  }
+
+  /* ---- entry drawer ---- */
+  .drawer{max-width:440px;padding:1.5rem 1.5rem 1.7rem;}
+  .drawer h2{font-family:'Jost',sans-serif;font-weight:400;font-size:1.4rem;margin:0 0 0.2rem;color:var(--ink);}
+  .drawer .dsub{color:var(--ink-3);font-size:13px;margin:0 0 1.2rem;}
+  .field{margin-bottom:1rem;position:relative;}
+  .field > label{display:block;font-family:'Jost',sans-serif;font-weight:500;font-size:11.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--label-ink);margin-bottom:0.34rem;}
+  .field .req{color:var(--ink-faint);font-weight:500;}
+  .field .new-tag{color:var(--aloe-deep);font-weight:500;letter-spacing:0.1em;}
+  .input{width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:15px;color:var(--ink);background:var(--plaster-top);border:1px solid var(--sand);border-radius:var(--r-sm);padding:0.6rem 0.7rem;}
+  .input:focus{outline:none;border-color:var(--aloe);box-shadow:var(--focus);}
+  .input.typing{border-color:var(--aloe);box-shadow:var(--focus);}
+
+  /* autocomplete plaster plane */
+  .ac{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:5;
+    background:linear-gradient(180deg,var(--plaster-hi),var(--plaster));border:1px solid var(--sand);border-radius:var(--r-sm);
+    box-shadow:var(--sh-float),var(--hi-edge);overflow:hidden;padding:0.28rem;}
+  .ac-cap{font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);padding:0.35rem 0.5rem 0.4rem;}
+  .ac-item{display:flex;align-items:center;gap:0.55rem;padding:0.5rem 0.55rem;border-radius:3px;font-size:14.5px;color:var(--ink-2);cursor:pointer;}
+  .ac-item .dotm{width:5px;height:5px;border-radius:50%;background:var(--teak-soft);flex:none;}
+  .ac-item mark{background:none;color:var(--ink);font-weight:600;}
+  .ac-item.active{background:var(--aloe-wash,rgba(59,107,76,0.10));color:var(--ink);}
+  .ac-item.active .dotm{background:var(--aloe);}
+  .ac-hint{padding:0.4rem 0.55rem 0.3rem;border-top:1px solid var(--sand-soft);margin-top:0.2rem;color:var(--ink-faint);font-size:11.5px;}
+  kbd{font-family:'Jost',sans-serif;font-size:10.5px;background:var(--recess);border:1px solid var(--sand);border-radius:3px;padding:0.02rem 0.32rem;color:var(--ink-3);}
+
+  .btnrow{display:flex;gap:0.6rem;margin-top:1.3rem;}
+  .btn{font-family:'Jost',sans-serif;font-weight:500;font-size:12.5px;letter-spacing:0.08em;text-transform:uppercase;border-radius:var(--r-sm);padding:0.62rem 1.05rem;border:1px solid transparent;cursor:pointer;}
+  .btn-primary{background:var(--aloe);color:var(--on-aloe);box-shadow:0 6px 16px -8px rgba(47,90,63,0.6);}
+  .btn-ghost{background:var(--recess);border-color:var(--sand);color:var(--ink-2);}
+
+  /* ---- list row ---- */
+  .entry{padding:1.15rem 1.3rem;max-width:680px;}
+  .entry .rail{font-family:'Jost',sans-serif;color:var(--walnut);}
+  .entry .day{font-size:1.5rem;font-weight:300;line-height:1;color:var(--walnut-deep);}
+  .entry .yr{font-size:12px;letter-spacing:0.12em;color:var(--ink-faint);}
+  .entry .top{display:flex;justify-content:space-between;gap:1rem;align-items:baseline;border-bottom:1px solid var(--sand-soft);padding-bottom:0.7rem;margin-bottom:0.7rem;}
+  .pname{font-family:'Jost',sans-serif;font-weight:400;font-size:1.35rem;color:var(--ink);}
+  .datecell{font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--ink-3);white-space:nowrap;}
+  .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem 1.8rem;}
+  @media (max-width:560px){.meta{grid-template-columns:1fr;}}
+  .cell .lab{font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--label-ink);display:block;margin-bottom:0.12rem;}
+  .cell.playwright .lab{color:var(--aloe-deep);}
+  .val{font-size:14.5px;color:var(--ink-2);}
+  /* person value: dotted 'sill' filter + boxed imdb icon (verbatim pattern) */
+  .fval{color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--teak);padding-bottom:1px;cursor:pointer;}
+  .imdb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:14px;margin-left:5px;border:1px solid var(--sand);border-radius:2px;color:var(--walnut);vertical-align:middle;}
+  .imdb svg{width:9px;height:9px;}
+  .cast .fval{margin-right:2px;}
+  .sep{color:var(--ink-faint);}
+
+  /* ---- app icon ---- */
+  .iconrow{display:flex;flex-wrap:wrap;gap:2rem 2.4rem;align-items:flex-end;}
+  .icard{display:flex;flex-direction:column;align-items:center;gap:0.55rem;}
+  .ic-lab{font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);}
+  .appicon{border-radius:22.6%;box-shadow:var(--sh-plane);display:block;}
+  .appicon.s180{width:150px;height:150px;}
+  .appicon.s120{width:96px;height:96px;}
+  .appicon.s60{width:58px;height:58px;}
+  .altnote{color:var(--ink-3);font-size:13px;max-width:60ch;margin:1.3rem 0 0;}
+
+  /* home screen mock */
+  .homewrap{margin-top:1.6rem;display:flex;gap:2rem;flex-wrap:wrap;align-items:flex-start;}
+  .phone{width:250px;border-radius:38px;padding:14px;background:#241d16;box-shadow:var(--sh-float);flex:none;}
+  .screen{border-radius:26px;overflow:hidden;height:430px;position:relative;
+    background:radial-gradient(120% 70% at 50% 0%, #6f5a44, #3a2d20 70%);padding:20px 18px;}
+  .statusbar{display:flex;justify-content:space-between;color:#f4ecdd;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.04em;margin-bottom:26px;opacity:0.85;}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 14px;}
+  .app{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .app .tile{width:46px;height:46px;border-radius:22.6%;box-shadow:0 6px 12px -6px rgba(0,0,0,0.4);}
+  .app .name{font-family:'IBM Plex Sans',sans-serif;font-size:9.5px;color:#f4ecdd;text-align:center;max-width:54px;line-height:1.1;}
+  .app.ours .name{font-weight:600;}
+  .t-mail{background:linear-gradient(160deg,#eaf2ff,#8fb6ff);} .t-cal{background:linear-gradient(160deg,#fff,#f2f2f2);}
+  .t-notes{background:linear-gradient(160deg,#fff5c9,#ffe27a);} .t-maps{background:linear-gradient(160deg,#dff0d8,#a9d9a1);}
+  .t-music{background:linear-gradient(160deg,#ff7a8a,#ff3b5c);} .t-photos{background:linear-gradient(160deg,#fff,#eef);}
+  .t-clock{background:#111;} .t-set{background:linear-gradient(160deg,#cfd6df,#98a2ad);}
+  .caption{color:var(--ink-3);font-size:13.5px;max-width:34ch;}
+  .caption b{color:var(--ink);font-weight:600;}
+
+  .foot{margin-top:3rem;color:var(--ink-faint);font-size:12.5px;border-top:1px solid var(--sand-soft);padding-top:1rem;}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="tile" cx="50%" cy="30%" r="85%">
+    <stop offset="0%" stop-color="#FFFCF5"/><stop offset="46%" stop-color="#F3EAD8"/>
+    <stop offset="100%" stop-color="#E3D2B4"/>
+  </radialGradient>
+  <linearGradient id="curtain" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#9A6738"/><stop offset="100%" stop-color="#4B2F19"/>
+  </linearGradient>
+  <linearGradient id="spot" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FDF8EE" stop-opacity="0.9"/><stop offset="100%" stop-color="#FDF8EE" stop-opacity="0"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="shell">
+  <header class="masthead">
+    <p class="eyebrow">Instant Re<span style="color:var(--aloe)">·</span>Play · Design refinement</p>
+    <h1 class="title">Three small refinements<span class="dot">.</span></h1>
+    <p class="sub">Autocomplete on the entry fields, a new playwright field, and a home-screen icon. All within the existing Neutra language, nothing new invented. This is the design direction to react to, not the final build.</p>
+  </header>
+
+  <!-- 1. Autocomplete + playwright field -->
+  <section class="sec">
+    <p class="sec-head">1 · The entry form</p>
+    <p class="sec-note">Typing a venue, director, actor, or the new playwright surfaces names you have used before, so the same person is always spelled the same way (which keeps filtering, stats, and export joined up). The suggestion list is a quiet floating plane and is fully keyboard-driven.</p>
+    <div class="plane drawer">
+      <h2>Log a play</h2>
+      <p class="dsub">Only the name is required.</p>
+
+      <div class="field">
+        <label>Play name <span class="req">(required)</span></label>
+        <input class="input" value="A Streetcar Named Desire" />
+      </div>
+      <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
+        <div><label>Date seen</label><input class="input" value="2024-02-09" /></div>
+        <div><label>Venue</label><input class="input" value="Almeida Theatre" /></div>
+      </div>
+
+      <!-- Playwright: NEW field, sits right above Director -->
+      <div class="field">
+        <label>Playwright <span class="new-tag">· new</span></label>
+        <input class="input typing" value="Tennessee Wil" />
+        <div class="ac" role="listbox" aria-label="Playwright suggestions">
+          <p class="ac-cap">From your archive</p>
+          <div class="ac-item active" role="option" aria-selected="true"><span class="dotm"></span><span>Tennessee <mark>Wil</mark>liams</span></div>
+          <div class="ac-item" role="option"><span class="dotm"></span><span>Thornton <mark>Wil</mark>der</span></div>
+          <p class="ac-hint"><kbd>↑</kbd> <kbd>↓</kbd> to choose · <kbd>Enter</kbd> to fill · <kbd>Esc</kbd> to dismiss · or just keep typing</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Director</label>
+        <input class="input" value="Rebecca Frecknall" />
+      </div>
+      <div class="field">
+        <label>Cast</label>
+        <input class="input" placeholder="Add an actor and press Enter" />
+      </div>
+
+      <div class="btnrow">
+        <button class="btn btn-ghost" type="button">Cancel</button>
+        <button class="btn btn-primary" type="button">Save play</button>
+      </div>
+    </div>
+    <p class="sec-note" style="margin-top:0.9rem;">The playwright sits just above the director, so the two people who made the production read together. Suggestions come only from your own past entries. Nothing is auto-corrected. If you mean a new name, keep typing and it saves as-is.</p>
+  </section>
+
+  <!-- 2. Playwright in the list -->
+  <section class="sec">
+    <p class="sec-head">2 · In the list</p>
+    <p class="sec-note">In the log, the playwright appears alongside the director as a matching person. Click the name to filter to everything they wrote; the small boxed icon opens an IMDb search, exactly like director and cast today. Venues stay link-free.</p>
+    <div class="plane entry">
+      <div class="top">
+        <div style="display:flex;gap:1rem;align-items:baseline;">
+          <span class="rail"><span class="day">9</span> <span class="yr">FEB 2024</span></span>
+          <span class="pname">A Streetcar Named Desire</span>
+        </div>
+        <span class="datecell">Almeida Theatre</span>
+      </div>
+      <div class="meta">
+        <div class="cell playwright">
+          <span class="lab">Playwright</span>
+          <span class="val"><a class="fval">Tennessee Williams</a><span class="imdb" title="IMDb search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8"/></svg></span></span>
+        </div>
+        <div class="cell">
+          <span class="lab">Director</span>
+          <span class="val"><a class="fval">Rebecca Frecknall</a><span class="imdb" title="IMDb search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8"/></svg></span></span>
+        </div>
+        <div class="cell cast" style="grid-column:1 / -1;">
+          <span class="lab">Cast</span>
+          <span class="val">
+            <a class="fval">Paul Mescal</a><span class="imdb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8"/></svg></span><span class="sep"> · </span>
+            <a class="fval">Patsy Ferran</a><span class="imdb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8"/></svg></span><span class="sep"> · </span>
+            <a class="fval">Anjana Vasan</a><span class="imdb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Home-screen icon -->
+  <section class="sec">
+    <p class="sec-head">3 · The home-screen icon</p>
+    <p class="sec-note">When Instant Re-Play is added to an iPhone or iPad home screen, this is the icon it gets. The recommended direction is a little golden-hour proscenium: a warm stage under a soft spotlight, with a quiet aloe play mark at its heart. Theatrical, architectural, and unmistakably ours.</p>
+
+    <div class="iconrow">
+      <!-- Direction A (recommended) -->
+      <div class="icard">
+        <svg class="appicon s180" viewBox="0 0 512 512" role="img" aria-label="Instant Re-Play app icon">
+          <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+          <!-- horizon / stage floor -->
+          <rect x="72" y="348" width="368" height="10" rx="5" fill="#7A5233" opacity="0.9"/>
+          <!-- spotlight cone -->
+          <polygon points="256,96 356,344 156,344" fill="url(#spot)"/>
+          <!-- proscenium arch -->
+          <path d="M132 356 V212 a124 124 0 0 1 248 0 V356" fill="none" stroke="url(#curtain)" stroke-width="26" stroke-linecap="round"/>
+          <!-- curtain swags -->
+          <path d="M132 214 q40 44 40 128" fill="none" stroke="#9A6738" stroke-width="16" stroke-linecap="round" opacity="0.55"/>
+          <path d="M380 214 q-40 44 -40 128" fill="none" stroke="#9A6738" stroke-width="16" stroke-linecap="round" opacity="0.55"/>
+          <!-- spotlight glow + play mark -->
+          <circle cx="256" cy="250" r="60" fill="#3B6B4C"/>
+          <circle cx="256" cy="250" r="60" fill="none" stroke="#FDF8EE" stroke-width="3" opacity="0.35"/>
+          <polygon points="240,222 288,250 240,278" fill="#FDF8EE"/>
+        </svg>
+        <span class="ic-lab">Recommended · 180px</span>
+      </div>
+
+      <div class="icard">
+        <svg class="appicon s120" viewBox="0 0 512 512" aria-hidden="true">
+          <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+          <rect x="72" y="348" width="368" height="10" rx="5" fill="#7A5233" opacity="0.9"/>
+          <polygon points="256,96 356,344 156,344" fill="url(#spot)"/>
+          <path d="M132 356 V212 a124 124 0 0 1 248 0 V356" fill="none" stroke="url(#curtain)" stroke-width="26" stroke-linecap="round"/>
+          <circle cx="256" cy="250" r="60" fill="#3B6B4C"/>
+          <polygon points="240,222 288,250 240,278" fill="#FDF8EE"/>
+        </svg>
+        <span class="ic-lab">120px</span>
+      </div>
+
+      <div class="icard">
+        <svg class="appicon s60" viewBox="0 0 512 512" aria-hidden="true">
+          <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+          <rect x="72" y="348" width="368" height="10" rx="5" fill="#7A5233"/>
+          <path d="M132 356 V212 a124 124 0 0 1 248 0 V356" fill="none" stroke="url(#curtain)" stroke-width="30" stroke-linecap="round"/>
+          <circle cx="256" cy="250" r="62" fill="#3B6B4C"/>
+          <polygon points="240,221 289,250 240,279" fill="#FDF8EE"/>
+        </svg>
+        <span class="ic-lab">Small (60px)</span>
+      </div>
+
+      <!-- Direction B (alternative) -->
+      <div class="icard">
+        <svg class="appicon s120" viewBox="0 0 512 512" role="img" aria-label="Alternative icon direction">
+          <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+          <!-- replay loop around a play mark: literal to the name -->
+          <path d="M256 150 a106 106 0 1 1 -96 61" fill="none" stroke="#7A5233" stroke-width="30" stroke-linecap="round"/>
+          <polygon points="256,120 300,150 256,180" fill="#A5502F"/>
+          <polygon points="232,214 300,256 232,298" fill="#3B6B4C"/>
+        </svg>
+        <span class="ic-lab">Alt · "Re·Play" loop</span>
+      </div>
+    </div>
+
+    <p class="altnote">Two directions: <b>A</b> (the proscenium, recommended) leans theatrical and architectural. <b>B</b> is a more literal nod to the name, a replay loop wrapped around a play mark in warm clay and aloe. I can take either further.</p>
+
+    <div class="homewrap">
+      <div class="phone" aria-label="Simulated iPhone home screen">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>Instant Re-Play</span></div>
+          <div class="grid">
+            <div class="app"><span class="tile t-mail"></span><span class="name">Mail</span></div>
+            <div class="app"><span class="tile t-cal"></span><span class="name">Calendar</span></div>
+            <div class="app"><span class="tile t-notes"></span><span class="name">Notes</span></div>
+            <div class="app"><span class="tile t-maps"></span><span class="name">Maps</span></div>
+            <div class="app ours">
+              <svg class="tile" viewBox="0 0 512 512" aria-label="Instant Re-Play">
+                <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+                <rect x="72" y="348" width="368" height="10" rx="5" fill="#7A5233"/>
+                <path d="M132 356 V212 a124 124 0 0 1 248 0 V356" fill="none" stroke="url(#curtain)" stroke-width="30" stroke-linecap="round"/>
+                <circle cx="256" cy="250" r="62" fill="#3B6B4C"/>
+                <polygon points="240,221 289,250 240,279" fill="#FDF8EE"/>
+              </svg>
+              <span class="name">Instant Re-Play</span>
+            </div>
+            <div class="app"><span class="tile t-music"></span><span class="name">Music</span></div>
+            <div class="app"><span class="tile t-photos"></span><span class="name">Photos</span></div>
+            <div class="app"><span class="tile t-clock"></span><span class="name">Clock</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">On the home screen next to everything else. The warm tile stands out among the cool system icons, and the label reads <b>Instant Re-Play</b>. Tapping it opens straight to your log, full screen, with its own warm theme colour behind the status bar.</p>
+    </div>
+  </section>
+
+  <p class="foot">Design refinement mockup · Instant Re-Play · reuses the shipped Neutra design system, no new tokens or fonts. Icon shown as inline SVG (exported to the real PNG/maskable sizes at build).</p>
+</div>
+</body>
+</html>

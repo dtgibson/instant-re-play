@@ -1,0 +1,239 @@
+{
+  "id": "c3e6bb1b-e2e7-484b-a0a5-dc29efbefa77",
+  "prevId": "2986ccc8-8e25-4143-b6d4-dae021b0c3ec",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.play_actors": {
+      "name": "play_actors",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "play_id": {
+          "name": "play_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "play_actors_name_idx": {
+          "name": "play_actors_name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "play_actors_play_id_plays_id_fk": {
+          "name": "play_actors_play_id_plays_id_fk",
+          "tableFrom": "play_actors",
+          "tableTo": "plays",
+          "columnsFrom": [
+            "play_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "play_actors_play_id_name_key": {
+          "name": "play_actors_play_id_name_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "play_id",
+            "name"
+          ]
+        },
+        "play_actors_play_id_position_key": {
+          "name": "play_actors_play_id_position_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "play_id",
+            "position"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "play_actors_name_not_blank": {
+          "name": "play_actors_name_not_blank",
+          "value": "btrim(\"play_actors\".\"name\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.plays": {
+      "name": "plays",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_seen": {
+          "name": "date_seen",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "venue": {
+          "name": "venue",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playwright": {
+          "name": "playwright",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "director": {
+          "name": "director",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "plays_date_seen_idx": {
+          "name": "plays_date_seen_idx",
+          "columns": [
+            {
+              "expression": "\"date_seen\" DESC NULLS LAST",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "plays_venue_idx": {
+          "name": "plays_venue_idx",
+          "columns": [
+            {
+              "expression": "venue",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "plays_director_idx": {
+          "name": "plays_director_idx",
+          "columns": [
+            {
+              "expression": "director",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "plays_playwright_idx": {
+          "name": "plays_playwright_idx",
+          "columns": [
+            {
+              "expression": "playwright",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "plays_name_not_blank": {
+          "name": "plays_name_not_blank",
+          "value": "btrim(\"plays\".\"name\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
