@@ -30,7 +30,7 @@ own front door: a login that admits named people and no one else.
 
 ## The User Problem
 
-- **The owner** (dave@dtgibson.com) has a working archive he wants to share with
+- **The owner** has a working archive he wants to share with
   his dad, and only his dad. He does not want the site public, and he does not
   want to manage Vercel accounts for a family member.
 - **His dad** is non-technical. Passwords are friction and another thing to
