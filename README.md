@@ -4,6 +4,8 @@ A private theatre archive. A calm web app for keeping a personal record of every
 
 Live example: it runs behind a passwordless email login, so only invited addresses can get in.
 
+![Instant Re-Play Play Log populated with sample theatre visits](docs/instant-re-play-play-log.png)
+
 ## How it works
 
 **Getting in.** The whole app sits behind a login. You enter your email and receive a one-time sign-in link; clicking it signs you in. There are no passwords. Access is invite-only: only email addresses on a server-side allowlist can get in, and everyone who is invited shares the *same* archive (it is a shared log, not one account per person). A valid sign-in is necessary but not sufficient; the app re-checks that your email is invited on every page, every action, and every download, so nothing is reachable without an invite.
